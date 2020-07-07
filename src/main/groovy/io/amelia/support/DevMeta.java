@@ -11,7 +11,7 @@ import java.util.Properties;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.engine.subsystem.Foundation;
+import io.amelia.engine.EngineCore;
 import io.amelia.lang.ApplicationException;
 
 public class DevMeta implements DevMetaProvider
@@ -35,14 +35,14 @@ public class DevMeta implements DevMetaProvider
 
 	public DevMeta( @Nonnull String fileName ) throws ApplicationException.Error, IOException
 	{
-		this( Foundation.class, fileName );
+		this( EngineCore.class, fileName );
 	}
 
 	public DevMeta( @Nonnull Class<?> cls, @Nonnull String fileName ) throws ApplicationException.Error
 	{
 		InputStream is = cls.getClassLoader().getResourceAsStream( fileName );
 		if ( is == null )
-			Foundation.L.warning( "The DevMeta file \"" + fileName + "\" does not exist!" );
+			EngineCore.L.warning( "The DevMeta file \"" + fileName + "\" does not exist!" );
 		else
 			loadProp( is );
 	}

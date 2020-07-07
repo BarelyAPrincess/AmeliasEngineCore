@@ -1,14 +1,14 @@
 package io.amelia.engine;
 
-import io.amelia.engine.subsystem.Foundation;
+import io.amelia.lang.StartupInterruptException;
 
 public class EntryPoint
 {
 	public static void main( String... args ) throws Exception
 	{
-		Foundation.init();
+		EngineCore.init();
 
-		EngineCoreApplication app = new EngineCoreApplication();
+		EngineCoreApplication app = EngineCore.getApplication();
 
 		try
 		{
