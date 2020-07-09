@@ -18,6 +18,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import io.amelia.extra.UtilityArrs;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
+
 public class NodePath extends io.amelia.support.NodeStack<NodePath> implements ImplPath<io.amelia.support.NodePath>
 {
 	public static final Separator DEFAULT_SEPARATOR = Separator.FORWARDSLASH;
@@ -39,8 +44,8 @@ public class NodePath extends io.amelia.support.NodeStack<NodePath> implements I
 
 	public static io.amelia.support.NodePath of( @Nullable String path, @Nonnull Separator separator )
 	{
-		path = io.amelia.support.Objs.notNullOrDef( path, "" );
-		return new io.amelia.support.NodePath( io.amelia.support.Strs.split( path, Pattern.compile( separator.getSeparator(), Pattern.LITERAL ) ).collect( Collectors.toList() ), separator ).setAbsolute( path.startsWith( separator.getSeparator() ) );
+		path = UtilityObjects.notNullOrDef( path, "" );
+		return new io.amelia.support.NodePath( UtilityStrings.split( path, Pattern.compile( separator.getSeparator(), Pattern.LITERAL ) ).collect( Collectors.toList() ), separator ).setAbsolute( path.startsWith( separator.getSeparator() ) );
 	}
 
 	public static io.amelia.support.NodePath of( @Nonnull Collection<String> nodes, @Nonnull Separator separator )
@@ -55,7 +60,7 @@ public class NodePath extends io.amelia.support.NodeStack<NodePath> implements I
 
 	public static io.amelia.support.NodePath of( @Nonnull Path path, @Nonnull Separator separator )
 	{
-		return of( io.amelia.support.IO.getNames( path ) );
+		return of( UtilityIO.getNames( path ) );
 	}
 
 	public static io.amelia.support.NodePath of( @Nonnull Collection<String> nodes )
@@ -70,7 +75,7 @@ public class NodePath extends io.amelia.support.NodeStack<NodePath> implements I
 
 	public static io.amelia.support.NodePath of( @Nonnull Path path )
 	{
-		return of( io.amelia.support.IO.getNames( path ) );
+		return of( UtilityIO.getNames( path ) );
 	}
 
 	private boolean isAbsolute;
@@ -115,7 +120,7 @@ public class NodePath extends io.amelia.support.NodeStack<NodePath> implements I
 	{
 		if ( node.isEmpty() )
 			return this;
-		this.nodes = io.amelia.support.Arrs.concat( this.nodes, node.nodes );
+		this.nodes = UtilityArrs.concat( this.nodes, node.nodes );
 		return this;
 	}
 
@@ -123,7 +128,7 @@ public class NodePath extends io.amelia.support.NodeStack<NodePath> implements I
 	{
 		if ( node.isEmpty() )
 			return clone();
-		return create( io.amelia.support.Arrs.concat( this.nodes, node.nodes ) );
+		return create( UtilityArrs.concat( this.nodes, node.nodes ) );
 	}
 
 	@Override

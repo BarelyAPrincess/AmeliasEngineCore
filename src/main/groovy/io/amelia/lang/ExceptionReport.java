@@ -24,8 +24,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import io.amelia.foundation.Kernel;
-import io.amelia.support.Exceptions;
-import io.amelia.support.Strs;
+import io.amelia.extra.UtilityExceptions;
+import io.amelia.extra.UtilityStrings;
 
 /**
  * This class is used to analyze and report exceptions
@@ -158,7 +158,7 @@ public final class ExceptionReport
 			if ( reportingLevel != null )
 			{
 				if ( !wasHandleExceptionCalled )
-					Kernel.L.info( "ExceptionContext#handle() did appear to properly handle, so we'll print a stacktrace for some extra assistance.\n" + Exceptions.getStackTrace( cause ) );
+					Kernel.L.info( "ExceptionContext#handle() did appear to properly handle, so we'll print a stacktrace for some extra assistance.\n" + UtilityExceptions.getStackTrace( cause ) );
 
 				hasErrored = !reportingLevel.isIgnorable();
 				return;
@@ -283,7 +283,7 @@ public final class ExceptionReport
 
 	public void printIgnorableToLog( Kernel.Logger logger )
 	{
-		Strs.split( printIgnorableToString(), "\n" ).forEach( line -> logger.warning( line ) );
+		UtilityStrings.split( printIgnorableToString(), "\n" ).forEach( line -> logger.warning( line ) );
 	}
 
 	public String printIgnorableToString()
@@ -303,7 +303,7 @@ public final class ExceptionReport
 
 	public void printSevereToLog( Kernel.Logger logger )
 	{
-		Strs.split( printSevereToString(), "\n" ).forEach( line -> logger.severe( line ) );
+		UtilityStrings.split( printSevereToString(), "\n" ).forEach( line -> logger.severe( line ) );
 	}
 
 	public String printSevereToString()

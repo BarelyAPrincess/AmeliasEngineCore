@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 
 import io.amelia.engine.EngineCore;
 import io.amelia.lang.ApplicationException;
+import io.amelia.extra.UtilityIO;
 
 public class DevMeta implements DevMetaProvider
 {
@@ -69,7 +70,7 @@ public class DevMeta implements DevMetaProvider
 		}
 		finally
 		{
-			IO.closeQuietly( is );
+			UtilityIO.closeQuietly( is );
 		}
 	}
 }

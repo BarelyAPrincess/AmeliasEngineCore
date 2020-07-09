@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.awt.Color;
 import java.io.UnsupportedEncodingException;
@@ -37,8 +37,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import io.amelia.lang.APINotice;
+import io.amelia.support.EscapeTranslator;
 
-public class Strs
+public class UtilityStrings
 {
 	public static final Map<String, String[]> CHARS_MAP;
 	private static final Pattern SIMPLE_REGEX_PATTERN_CHARS = Pattern.compile( "^[\\w\\d\\s\\n\\t\\r\\\\.,*?+{}|]*$" );
@@ -201,10 +202,10 @@ public class Strs
 
 	public static String capitalizeWords( String str, char delimiter )
 	{
-		if ( Objs.isEmpty( str ) )
+		if ( UtilityObjects.isEmpty( str ) )
 			return str;
 
-		Objs.notNull( delimiter );
+		UtilityObjects.notNull( delimiter );
 
 		final char[] buffer = str.toCharArray();
 		boolean capitalizeNext = true;
@@ -229,7 +230,7 @@ public class Strs
 
 	public static String capitalizeWordsFully( String str, char delimiter )
 	{
-		if ( Objs.isEmpty( str ) )
+		if ( UtilityObjects.isEmpty( str ) )
 			return str;
 
 		return capitalizeWords( str.toLowerCase(), delimiter );
@@ -276,9 +277,9 @@ public class Strs
 	 */
 	public static <T extends Collection<String>> T copyPartialMatches( final String token, final Iterable<String> originals, final T collection ) throws UnsupportedOperationException, IllegalArgumentException
 	{
-		Objs.notNull( token, "Search token cannot be null" );
-		Objs.notNull( collection, "Collection cannot be null" );
-		Objs.notNull( originals, "Originals cannot be null" );
+		UtilityObjects.notNull( token, "Search token cannot be null" );
+		UtilityObjects.notNull( collection, "Collection cannot be null" );
+		UtilityObjects.notNull( originals, "Originals cannot be null" );
 
 		for ( String string : originals )
 			if ( startsWithIgnoreCase( string, token ) )
@@ -425,12 +426,12 @@ public class Strs
 
 	public static String join( @Nonnull Map<String, ?> args, @Nonnull String glue, @Nonnull String keyValueSeparator )
 	{
-		return args.entrySet().stream().map( e -> e.getKey() + keyValueSeparator + Objs.castToString( e.getValue() ) ).collect( Collectors.joining( glue ) );
+		return args.entrySet().stream().map( e -> e.getKey() + keyValueSeparator + UtilityObjects.castToString( e.getValue() ) ).collect( Collectors.joining( glue ) );
 	}
 
 	public static String join( @Nonnull Map<String, ?> args, @Nonnull String glue, @Nonnull String keyValueSeparator, @Nonnull String nullValue )
 	{
-		return args.entrySet().stream().map( e -> e.getKey() + keyValueSeparator + ( e.getValue() == null ? nullValue : Objs.castToString( e.getValue() ) ) ).collect( Collectors.joining( glue ) );
+		return args.entrySet().stream().map( e -> e.getKey() + keyValueSeparator + ( e.getValue() == null ? nullValue : UtilityObjects.castToString( e.getValue() ) ) ).collect( Collectors.joining( glue ) );
 	}
 
 	public static String join( @Nonnull Collection<String> args )
@@ -486,7 +487,7 @@ public class Strs
 
 	public static void lengthMustEqual( @Nonnull String str, @Nonnegative int len )
 	{
-		Objs.notFalse( str.length() == len, "String is lessThan or greatThan the required string length. {required=" + len + ",got=" + str.length() + "}" );
+		UtilityObjects.notFalse( str.length() == len, "String is lessThan or greatThan the required string length. {required=" + len + ",got=" + str.length() + "}" );
 	}
 
 	public static int lengthOrNeg( @Nullable String str )
@@ -586,7 +587,7 @@ public class Strs
 
 	public static String randomChars( String seed, int length )
 	{
-		Objs.notEmpty( seed );
+		UtilityObjects.notEmpty( seed );
 
 		StringBuilder sb = new StringBuilder();
 
@@ -722,21 +723,21 @@ public class Strs
 
 	public static Stream<String> split( @Nonnull String str, @Nonnull String delimiter, @Nonnegative int limit )
 	{
-		if ( Objs.isEmpty( str ) )
+		if ( UtilityObjects.isEmpty( str ) )
 			return Stream.empty();
 		return Arrays.stream( str.split( delimiter, limit ) );
 	}
 
 	public static Stream<String> split( @Nonnull String str, @Nonnull String delimiter )
 	{
-		if ( Objs.isEmpty( str ) )
+		if ( UtilityObjects.isEmpty( str ) )
 			return Stream.empty();
 		return Arrays.stream( str.split( delimiter ) );
 	}
 
 	public static Stream<String> split( @Nonnull String str, @Nonnull Pattern delimiter )
 	{
-		if ( Objs.isEmpty( str ) )
+		if ( UtilityObjects.isEmpty( str ) )
 			return Stream.empty();
 		return Arrays.stream( delimiter.split( str ) );
 	}
@@ -823,17 +824,17 @@ public class Strs
 	 */
 	public static List<String> toLowerCase( List<String> strings )
 	{
-		return strings.stream().filter( v -> !Objs.isNull( v ) ).map( String::toLowerCase ).collect( Collectors.toList() );
+		return strings.stream().filter( v -> !UtilityObjects.isNull( v ) ).map( String::toLowerCase ).collect( Collectors.toList() );
 	}
 
 	public static Set<String> toLowerCase( Set<String> strings )
 	{
-		return strings.stream().filter( v -> !Objs.isNull( v ) ).map( String::toLowerCase ).collect( Collectors.toSet() );
+		return strings.stream().filter( v -> !UtilityObjects.isNull( v ) ).map( String::toLowerCase ).collect( Collectors.toSet() );
 	}
 
 	public static String[] toLowerCase( String[] strings )
 	{
-		return Arrays.stream( strings ).filter( v -> !Objs.isNull( v ) ).map( String::toLowerCase ).toArray( String[]::new );
+		return Arrays.stream( strings ).filter( v -> !UtilityObjects.isNull( v ) ).map( String::toLowerCase ).toArray( String[]::new );
 	}
 
 	public static char[] toLowerCase( char[] chars )
@@ -1009,7 +1010,7 @@ public class Strs
 		normalizedText = text.trim();
 		index = normalizedText.length() - 1;
 
-		while ( io.amelia.support.Arrs.contains( characters, normalizedText.charAt( index ) ) )
+		while ( UtilityArrs.contains( characters, normalizedText.charAt( index ) ) )
 			if ( --index < 0 )
 				return "";
 		return normalizedText.substring( 0, index + 1 ).trim();
@@ -1017,7 +1018,7 @@ public class Strs
 
 	public static String trimEnd( @Nullable String text, String substr )
 	{
-		if ( Objs.isEmpty( text ) )
+		if ( UtilityObjects.isEmpty( text ) )
 			return text;
 
 		if ( text.trim().endsWith( substr ) )
@@ -1056,7 +1057,7 @@ public class Strs
 	 */
 	public static String trimStart( @Nullable String text, char... characters )
 	{
-		if ( Objs.isEmpty( text ) )
+		if ( UtilityObjects.isEmpty( text ) )
 			return text;
 
 		String normalizedText = text.trim();
@@ -1064,14 +1065,14 @@ public class Strs
 
 		do
 			index++;
-		while ( index < normalizedText.length() && io.amelia.support.Arrs.contains( characters, normalizedText.charAt( index ) ) );
+		while ( index < normalizedText.length() && UtilityArrs.contains( characters, normalizedText.charAt( index ) ) );
 
 		return normalizedText.substring( index ).trim();
 	}
 
 	public static String trimStart( @Nullable String text, String substr )
 	{
-		if ( Objs.isEmpty( text ) )
+		if ( UtilityObjects.isEmpty( text ) )
 			return text;
 
 		if ( text.trim().startsWith( substr ) )
@@ -1140,7 +1141,7 @@ public class Strs
 		return String.format( "%s%s%s", wrap, str, wrap );
 	}
 
-	private Strs()
+	private UtilityStrings()
 	{
 
 	}
@@ -1154,7 +1155,7 @@ public class Strs
 
 		private static <R> R invokeMethod( String methodName, Object... args )
 		{
-			return Objs.invokeStaticMethod( "java.lang.ConditionalSpecialCasing", methodName, args );
+			return UtilityObjects.invokeStaticMethod( "java.lang.ConditionalSpecialCasing", methodName, args );
 		}
 
 		public static char[] toLowerCaseCharArray( String src, int index, Locale locale )
@@ -1189,25 +1190,25 @@ public class Strs
 
 		public StringChain capitalizeWords( char delimiter )
 		{
-			str = io.amelia.support.Strs.capitalizeWords( str, delimiter );
+			str = UtilityStrings.capitalizeWords( str, delimiter );
 			return this;
 		}
 
 		public StringChain capitalizeWords()
 		{
-			str = io.amelia.support.Strs.capitalizeWords( str );
+			str = UtilityStrings.capitalizeWords( str );
 			return this;
 		}
 
 		public StringChain capitalizeWordsFully( char delimiter )
 		{
-			str = io.amelia.support.Strs.capitalizeWordsFully( str, delimiter );
+			str = UtilityStrings.capitalizeWordsFully( str, delimiter );
 			return this;
 		}
 
 		public StringChain capitalizeWordsFully()
 		{
-			str = io.amelia.support.Strs.capitalizeWordsFully( str );
+			str = UtilityStrings.capitalizeWordsFully( str );
 			return this;
 		}
 
@@ -1266,7 +1267,7 @@ public class Strs
 
 		public StringChain repeat( int cnt )
 		{
-			str = io.amelia.support.Strs.repeat( str, cnt );
+			str = UtilityStrings.repeat( str, cnt );
 			return this;
 		}
 
@@ -1326,13 +1327,13 @@ public class Strs
 
 		public StringChain slugify()
 		{
-			str = io.amelia.support.Strs.slugify( str );
+			str = UtilityStrings.slugify( str );
 			return this;
 		}
 
 		public StringChain toCamelCase()
 		{
-			str = io.amelia.support.Strs.lcFirst( io.amelia.support.Strs.toStudlyCase( str ) );
+			str = UtilityStrings.lcFirst( UtilityStrings.toStudlyCase( str ) );
 			return this;
 		}
 
@@ -1344,7 +1345,7 @@ public class Strs
 
 		public StringChain toStudlyCase()
 		{
-			str = io.amelia.support.Strs.capitalizeWordsFully( str.replaceAll( "-_", " " ) ).replaceAll( " ", "" );
+			str = UtilityStrings.capitalizeWordsFully( str.replaceAll( "-_", " " ) ).replaceAll( " ", "" );
 			return this;
 		}
 
@@ -1357,7 +1358,7 @@ public class Strs
 		public StringChain trimAll( char character )
 		{
 			String normalizedText = trimStart( str, character );
-			str = io.amelia.support.Strs.trimEnd( normalizedText, character );
+			str = UtilityStrings.trimEnd( normalizedText, character );
 			return this;
 		}
 
@@ -1368,7 +1369,7 @@ public class Strs
 
 		public StringChain trimEnd( char character )
 		{
-			str = io.amelia.support.Strs.trimEnd( str, character );
+			str = UtilityStrings.trimEnd( str, character );
 			return this;
 		}
 
@@ -1428,7 +1429,7 @@ public class Strs
 
 		private static <R> R invokeMethod( String methodName, Object... args )
 		{
-			return Objs.invokeStaticMethod( "java.lang.StringCoding", methodName, args );
+			return UtilityObjects.invokeStaticMethod( "java.lang.StringCoding", methodName, args );
 		}
 	}
 }

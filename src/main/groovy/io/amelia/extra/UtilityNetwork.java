@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -28,11 +28,12 @@ import java.util.Enumeration;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.foundation.Kernel;
+import io.amelia.engine.subsystem.Subsystem;
+import io.amelia.support.Sys;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-public class NIO
+public class UtilityNetwork
 {
 	public static final String REGEX_IPV4 = "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$";
 	public static final String REGEX_IPV6 = "^((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$";
@@ -55,12 +56,12 @@ public class NIO
 		int length = buf.readInt();
 		byte[] bytes = new byte[length];
 		buf.readBytes( bytes );
-		return io.amelia.support.Strs.encodeUtf8( bytes );
+		return UtilityStrings.encodeUtf8( bytes );
 	}
 
 	public static void encodeStringToByteBuf( ByteBuf buf, String str )
 	{
-		byte[] bytes = io.amelia.support.Strs.decodeUtf8( str );
+		byte[] bytes = UtilityStrings.decodeUtf8( str );
 		buf.writeInt( bytes.length );
 		buf.writeBytes( bytes );
 	}
@@ -190,12 +191,12 @@ public class NIO
 
 	public static String readByteBufToString( ByteBuf buffer, int numberOfBytes )
 	{
-		return io.amelia.support.Strs.bytesToStringUTF( readByteBufToBytes( buffer, numberOfBytes ) );
+		return UtilityStrings.bytesToStringUTF( readByteBufToBytes( buffer, numberOfBytes ) );
 	}
 
 	public static String readByteBufToString( ByteBuf buffer )
 	{
-		return io.amelia.support.Strs.bytesToStringUTF( readByteBufToBytes( buffer ) );
+		return UtilityStrings.bytesToStringUTF( readByteBufToBytes( buffer ) );
 	}
 
 	public static byte[] readByteBufferToBytes( ByteBuffer buffer, int numberOfBytes )
@@ -216,12 +217,12 @@ public class NIO
 
 	public static String readByteBufferToString( ByteBuffer buffer, int numberOfBytes )
 	{
-		return io.amelia.support.Strs.bytesToStringUTF( readByteBufferToBytes( buffer, numberOfBytes ) );
+		return UtilityStrings.bytesToStringUTF( readByteBufferToBytes( buffer, numberOfBytes ) );
 	}
 
 	public static String readByteBufferToString( ByteBuffer buffer )
 	{
-		return io.amelia.support.Strs.bytesToStringUTF( readByteBufferToBytes( buffer ) );
+		return UtilityStrings.bytesToStringUTF( readByteBufferToBytes( buffer ) );
 	}
 
 	public static ByteBuf readStreamToByteBuf( InputStream inputStream ) throws IOException
@@ -240,7 +241,7 @@ public class NIO
 		}
 		finally
 		{
-			IO.closeQuietly( inputStream );
+			UtilityIO.closeQuietly( inputStream );
 		}
 	}
 
@@ -267,7 +268,7 @@ public class NIO
 			wr.close();
 
 			int responseCode = con.getResponseCode();
-			Kernel.L.fine( "Analytics Response [" + category + "]: " + responseCode );
+			Subsystem.L.fine( "Analytics Response [" + category + "]: " + responseCode );
 
 			BufferedReader in = new BufferedReader( new InputStreamReader( con.getInputStream() ) );
 			String inputLine;
@@ -285,7 +286,7 @@ public class NIO
 		}
 	}
 
-	private NIO()
+	private UtilityNetwork()
 	{
 
 	}

@@ -17,6 +17,9 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityLists;
+
 /**
  * WORK IN PROGRESS!!!
  *
@@ -62,7 +65,7 @@ public class Reflection
 	 */
 	public static void methodCall( Method enclosingMethod )
 	{
-		Objs.notNull( enclosingMethod );
+		UtilityObjects.notNull( enclosingMethod );
 
 		List<StackTraceElement> callHistory = methodCallEnforcements.get();
 
@@ -74,7 +77,7 @@ public class Reflection
 
 		if ( callHistory.size() > 10 )
 		{
-			callHistory = Lists.subList( callHistory, 0, 9 );
+			callHistory = UtilityLists.subList( callHistory, 0, 9 );
 			methodCallEnforcements.set( callHistory );
 		}
 
@@ -136,8 +139,8 @@ public class Reflection
 
 	public static void wasSuperCalled( Method method, int maxDepth )
 	{
-		Objs.notNegative( maxDepth );
-		Objs.notZero( maxDepth );
+		UtilityObjects.notNegative( maxDepth );
+		UtilityObjects.notZero( maxDepth );
 
 		List<StackTraceElement> callHistory = methodCallEnforcements.get();
 

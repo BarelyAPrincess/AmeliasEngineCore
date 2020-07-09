@@ -16,8 +16,11 @@ import java.util.Map;
 import java.util.function.Function;
 
 import io.amelia.engine.subsystem.ConfigData;
+import io.amelia.extra.UtilityMaps;
 import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ReportingLevel;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityLists;
 
 public class MetaMap extends HashMap<String, Object>
 {
@@ -43,7 +46,7 @@ public class MetaMap extends HashMap<String, Object>
 
 	public final <R> List<R> getList( String key, String regex, Function<String, R> function )
 	{
-		return Lists.walk( getList( key, regex ), function );
+		return UtilityLists.walk( getList( key, regex ), function );
 	}
 
 	@SuppressWarnings( "Unchecked" )
@@ -52,9 +55,9 @@ public class MetaMap extends HashMap<String, Object>
 		Object value = get( key );
 
 		if ( value instanceof Map )
-			return Maps.builder( ( Map<Object, Object> ) value ).castTo( String.class, Object.class ).map( MetaMap::new );
+			return UtilityMaps.builder( ( Map<Object, Object> ) value ).castTo( String.class, Object.class ).map( MetaMap::new );
 		if ( value instanceof List )
-			return Maps.builder().increment( ( List<Object> ) value ).castTo( String.class, Object.class ).map( MetaMap::new );
+			return UtilityMaps.builder().increment( ( List<Object> ) value ).castTo( String.class, Object.class ).map( MetaMap::new );
 		if ( value instanceof ConfigData )
 			return new MetaMap( ( ( ConfigData ) value ).values() );
 		return null;
@@ -74,6 +77,6 @@ public class MetaMap extends HashMap<String, Object>
 
 	public final String getString( Object key )
 	{
-		return Objs.castToString( get( key ) );
+		return UtilityObjects.castToString( get( key ) );
 	}
 }

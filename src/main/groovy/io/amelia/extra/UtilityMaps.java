@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -46,7 +46,7 @@ import javax.annotation.Nonnull;
 
 import javafx.util.Pair;
 
-public class Maps
+public class UtilityMaps
 {
 	/**
 	 * Checks and converts the string key to an integer. Non-numeric keys are removed from the treemap.
@@ -62,7 +62,7 @@ public class Maps
 		{{
 			for ( Map.Entry<String, T> entry : map.entrySet() )
 			{
-				if ( io.amelia.support.Maths.isNumber( entry.getKey() ) )
+				if ( UtilityMath.isNumber( entry.getKey() ) )
 					put( Integer.parseInt( entry.getKey() ), entry.getValue() );
 			}
 		}};
@@ -230,7 +230,7 @@ public class Maps
 	@SafeVarargs
 	public static <Key, Value> Map<Key, Value> joinMaps( Map<Key, Value>... maps )
 	{
-		if ( Objs.isEmpty( maps ) )
+		if ( UtilityObjects.isEmpty( maps ) )
 			return new HashMap<>();
 
 		return Arrays.stream( maps ).flatMap( m -> m.entrySet().stream() ).collect( Collectors.toMap( Map.Entry::getKey, Map.Entry::getValue ) );
@@ -240,7 +240,7 @@ public class Maps
 	{
 		if ( map == null )
 			return null;
-		Objs.notNull( val );
+		UtilityObjects.notNull( val );
 		for ( Map.Entry<K, V> entry : map.entrySet() )
 			if ( entry.getValue() == val )
 				return entry.getKey();
@@ -279,7 +279,7 @@ public class Maps
 				if ( annotation != null )
 				{
 					field.setAccessible( true );
-					result.put( annotation.value(), Objs.castToString( field.get( obj ) ) );
+					result.put( annotation.value(), UtilityObjects.castToString( field.get( obj ) ) );
 				}
 			}
 
@@ -291,7 +291,7 @@ public class Maps
 					if ( method.getParameterCount() > 0 )
 						throw new RuntimeException( "We can't use method " + method.getName() + " in a map if it has any parameters, it must have zero." );
 					method.setAccessible( true );
-					result.put( annotation.value(), Objs.castToString( method.invoke( obj ) ) );
+					result.put( annotation.value(), UtilityObjects.castToString( method.invoke( obj ) ) );
 				}
 			}
 		}
@@ -341,8 +341,8 @@ public class Maps
 	 */
 	public static <K, V> boolean removeIf( @Nonnull Map<K, V> map, @Nonnull BiPredicate<K, V> filter )
 	{
-		Objs.notNull( map );
-		Objs.notNull( filter );
+		UtilityObjects.notNull( map );
+		UtilityObjects.notNull( filter );
 
 		boolean removed = false;
 		final Iterator<Map.Entry<K, V>> each = map.entrySet().iterator();
@@ -368,7 +368,7 @@ public class Maps
 		return oldSize != map.size();
 	}
 
-	private Maps()
+	private UtilityMaps()
 	{
 
 	}
@@ -404,17 +404,17 @@ public class Maps
 
 		private <TK, TV> MapBuilder( Map<TK, TV> oldMap, Function<TK, CK> keyCastFunction, Class<CV> valueClass )
 		{
-			this( oldMap, keyCastFunction, value -> Objs.castTo( value, valueClass ) );
+			this( oldMap, keyCastFunction, value -> UtilityObjects.castTo( value, valueClass ) );
 		}
 
 		private <TK, TV> MapBuilder( Map<TK, TV> oldMap, Class<CK> keyClass, Function<TV, CV> valueCastFunction )
 		{
-			this( oldMap, key -> Objs.castTo( key, keyClass ), valueCastFunction );
+			this( oldMap, key -> UtilityObjects.castTo( key, keyClass ), valueCastFunction );
 		}
 
 		private <TK, TV> MapBuilder( Map<TK, TV> oldMap, Class<CK> keyClass, Class<CV> valueClass )
 		{
-			this( oldMap, key -> Objs.castTo( key, keyClass ), value -> Objs.castTo( value, valueClass ) );
+			this( oldMap, key -> UtilityObjects.castTo( key, keyClass ), value -> UtilityObjects.castTo( value, valueClass ) );
 		}
 
 		private MapBuilder( Map<?, ?> oldMap, CK key, CV value )
@@ -521,17 +521,17 @@ public class Maps
 
 		public <V> MapBuilder<String, V> putAll( Properties properties, Class<V> vClass )
 		{
-			return new MapBuilder<>( map, properties.stringPropertyNames().stream().collect( Collectors.toMap( s -> s, s -> Objs.castTo( properties.getProperty( s ), vClass ) ) ) );
+			return new MapBuilder<>( map, properties.stringPropertyNames().stream().collect( Collectors.toMap( s -> s, s -> UtilityObjects.castTo( properties.getProperty( s ), vClass ) ) ) );
 		}
 
 		public <K, V> MapBuilder<K, V> putAll( Properties properties, Class<K> kClass, Class<V> vClass )
 		{
-			return new MapBuilder<>( map, properties.stringPropertyNames().stream().collect( Collectors.toMap( s -> Objs.castTo( s, kClass ), s -> Objs.castTo( properties.getProperty( s ), vClass ) ) ) );
+			return new MapBuilder<>( map, properties.stringPropertyNames().stream().collect( Collectors.toMap( s -> UtilityObjects.castTo( s, kClass ), s -> UtilityObjects.castTo( properties.getProperty( s ), vClass ) ) ) );
 		}
 
 		private void putNotNull( CK key, CV value )
 		{
-			if ( !Objs.isNull( key ) && !Objs.isNull( value ) )
+			if ( !UtilityObjects.isNull( key ) && !UtilityObjects.isNull( value ) )
 				map.put( key, value );
 		}
 

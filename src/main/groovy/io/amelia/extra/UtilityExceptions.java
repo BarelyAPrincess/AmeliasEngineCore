@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -19,14 +19,16 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import io.amelia.lang.ApplicationException;
+import io.amelia.support.SupplierWithException;
+import io.amelia.support.Voluntary;
 
-public class Exceptions
+public class UtilityExceptions
 {
 	public static String getStackTrace( @Nonnull Throwable throwable )
 	{
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		throwable.printStackTrace( new PrintStream( out ) );
-		return Strs.encodeDefault( out.toByteArray() );
+		return UtilityStrings.encodeDefault( out.toByteArray() );
 	}
 
 	public static String getStackTrace()
@@ -119,7 +121,7 @@ public class Exceptions
 		return result.get();
 	}
 
-	private Exceptions()
+	private UtilityExceptions()
 	{
 		// Static Access
 	}

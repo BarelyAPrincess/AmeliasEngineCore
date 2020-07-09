@@ -11,6 +11,8 @@ package io.amelia.support;
 
 import java.util.function.Function;
 
+import io.amelia.extra.UtilityObjects;
+
 @FunctionalInterface
 public interface QuadFunction<T, Y, U, W, R>
 {
@@ -31,7 +33,7 @@ public interface QuadFunction<T, Y, U, W, R>
 	 */
 	default <V> io.amelia.support.QuadFunction<T, Y, U, W, V> andThen( Function<? super R, ? extends V> after )
 	{
-		io.amelia.support.Objs.isNotNull( after );
+		UtilityObjects.isNotNull( after );
 		return ( T t, Y y, U u, W w ) -> after.apply( apply( t, y, u, w ) );
 	}
 

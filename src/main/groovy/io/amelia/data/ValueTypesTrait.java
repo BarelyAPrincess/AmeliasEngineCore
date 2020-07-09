@@ -21,9 +21,9 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 import io.amelia.lang.ApplicationException;
-import io.amelia.support.IO;
-import io.amelia.support.Objs;
-import io.amelia.support.Strs;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
 import io.amelia.support.Voluntary;
 import io.amelia.support.VoluntaryBoolean;
 import io.amelia.support.VoluntaryLong;
@@ -47,7 +47,7 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 {
 	default VoluntaryBoolean getBoolean()
 	{
-		return VoluntaryBoolean.ofNullable( getValue().map( Objs::castToBoolean ).orElse( null ) );
+		return VoluntaryBoolean.ofNullable( getValue().map( UtilityObjects::castToBoolean ).orElse( null ) );
 	}
 
 	default Voluntary<Color> getColor()
@@ -57,7 +57,7 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 
 	default OptionalDouble getDouble()
 	{
-		return Objs.ifPresent( getValue().map( Objs::castToDouble ), OptionalDouble::of, OptionalDouble::empty );
+		return UtilityObjects.ifPresent( getValue().map( UtilityObjects::castToDouble ), OptionalDouble::of, OptionalDouble::empty );
 	}
 
 	default <T extends Enum<T>> Voluntary<T> getEnum( Class<T> enumClass )
@@ -67,7 +67,7 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 
 	default OptionalInt getInteger()
 	{
-		return Objs.ifPresent( getValue().map( Objs::castToInt ), OptionalInt::of, OptionalInt::empty );
+		return UtilityObjects.ifPresent( getValue().map( UtilityObjects::castToInt ), OptionalInt::of, OptionalInt::empty );
 	}
 
 	default <T> Voluntary<List<T>> getList()
@@ -82,12 +82,12 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 
 	default <T> Voluntary<List<T>> getList( @Nonnull Class<T> expectedObjectClass )
 	{
-		return getValue().filter( v -> v instanceof List ).map( v -> Objs.castList( ( List<?> ) v, expectedObjectClass ) );
+		return getValue().filter( v -> v instanceof List ).map( v -> UtilityObjects.castList( ( List<?> ) v, expectedObjectClass ) );
 	}
 
 	default VoluntaryLong getLong()
 	{
-		return Objs.ifPresent( getValue().map( Objs::castToLong ), VoluntaryLong::of, VoluntaryLong::empty );
+		return UtilityObjects.ifPresent( getValue().map( UtilityObjects::castToLong ), VoluntaryLong::of, VoluntaryLong::empty );
 	}
 
 	default Voluntary<String> getString()
@@ -102,27 +102,27 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 
 	default <T> Voluntary<Class<T>> getStringAsClass( @Nonnull Class<T> expectedClass )
 	{
-		return getString().map( str -> ( Class<T> ) Objs.getClassByName( str ) ).filter( expectedClass::isAssignableFrom );
+		return getString().map( str -> ( Class<T> ) UtilityObjects.getClassByName( str ) ).filter( expectedClass::isAssignableFrom );
 	}
 
 	default Voluntary<File> getStringAsFile( File rel )
 	{
-		return getString().map( s -> IO.buildFile( rel, s ) );
+		return getString().map( s -> UtilityIO.buildFile( rel, s ) );
 	}
 
 	default Voluntary<File> getStringAsFile()
 	{
-		return getString().map( IO::buildFile );
+		return getString().map( UtilityIO::buildFile );
 	}
 
 	default Voluntary<Path> getStringAsPath( Path rel )
 	{
-		return getString().map( s -> IO.buildPath( rel, s ) );
+		return getString().map( s -> UtilityIO.buildPath( rel, s ) );
 	}
 
 	default Voluntary<Path> getStringAsPath()
 	{
-		return getString().map( IO::buildPath );
+		return getString().map( UtilityIO::buildPath );
 	}
 
 	default Voluntary<List<String>> getStringList()
@@ -148,7 +148,7 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 			return Stream.empty();
 		if ( value instanceof List )
 			return ( ( List<String> ) value ).stream();
-		return Stream.of( value ).map( Objs::castToString ).flatMap( s -> Strs.split( s, delimiter ) );
+		return Stream.of( value ).map( UtilityObjects::castToString ).flatMap( s -> UtilityStrings.split( s, delimiter ) );
 	}
 
 	Voluntary<?> getValue();
@@ -160,7 +160,7 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 
 	default boolean isEmpty()
 	{
-		return getValue().map( Objs::isEmpty ).orElse( true );
+		return getValue().map( UtilityObjects::isEmpty ).orElse( true );
 	}
 
 	default boolean isList()
@@ -170,7 +170,7 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 
 	default boolean isNull()
 	{
-		return getValue().map( Objs::isNull ).orElse( true );
+		return getValue().map( UtilityObjects::isNull ).orElse( true );
 	}
 
 	default boolean isSet()
@@ -185,7 +185,7 @@ public interface ValueTypesTrait<ExceptionClass extends ApplicationException.Err
 
 	default boolean isTrue( boolean def )
 	{
-		return getValue().map( Objs::isTrue ).orElse( def );
+		return getValue().map( UtilityObjects::isTrue ).orElse( def );
 	}
 
 	default boolean isType( @Nonnull Class<?> type )

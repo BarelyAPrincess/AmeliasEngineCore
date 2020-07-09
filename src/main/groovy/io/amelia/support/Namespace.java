@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import io.amelia.foundation.ConfigRegistry;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
 
 public class Namespace extends io.amelia.support.NodeStack<Namespace> implements Comparable<Namespace>
 {
@@ -43,9 +45,9 @@ public class Namespace extends io.amelia.support.NodeStack<Namespace> implements
 
 	public static io.amelia.support.Namespace of( String namespace, String glue )
 	{
-		namespace = Objs.notNullOrDef( namespace, "" );
-		glue = Objs.notEmptyOrDef( glue, "." );
-		return new io.amelia.support.Namespace( Strs.split( namespace, Pattern.compile( glue, Pattern.LITERAL ) ).collect( Collectors.toList() ), glue );
+		namespace = UtilityObjects.notNullOrDef( namespace, "" );
+		glue = UtilityObjects.notEmptyOrDef( glue, "." );
+		return new io.amelia.support.Namespace( UtilityStrings.split( namespace, Pattern.compile( glue, Pattern.LITERAL ) ).collect( Collectors.toList() ), glue );
 	}
 
 	public static io.amelia.support.Namespace of( String[] nodes, String glue )
@@ -70,16 +72,16 @@ public class Namespace extends io.amelia.support.NodeStack<Namespace> implements
 
 	public static io.amelia.support.Namespace ofRegex( String namespace, String regex )
 	{
-		namespace = Objs.notNullOrDef( namespace, "" );
-		regex = Objs.notEmptyOrDef( regex, "\\." );
-		return new io.amelia.support.Namespace( Strs.split( namespace, Pattern.compile( regex ) ).collect( Collectors.toList() ) );
+		namespace = UtilityObjects.notNullOrDef( namespace, "" );
+		regex = UtilityObjects.notEmptyOrDef( regex, "\\." );
+		return new io.amelia.support.Namespace( UtilityStrings.split( namespace, Pattern.compile( regex ) ).collect( Collectors.toList() ) );
 	}
 
 	public static Domain parseDomain( String namespace )
 	{
 		namespace = Http.hostnameNormalize( namespace );
 
-		if ( Objs.isEmpty( namespace ) )
+		if ( UtilityObjects.isEmpty( namespace ) )
 			return new Domain( new io.amelia.support.Namespace(), new io.amelia.support.Namespace() );
 
 		io.amelia.support.Namespace ns = of( namespace );

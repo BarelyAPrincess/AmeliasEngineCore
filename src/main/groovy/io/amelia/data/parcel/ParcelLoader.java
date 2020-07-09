@@ -38,9 +38,9 @@ import io.amelia.data.yaml.YamlRepresenter;
 import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ParcelableException;
 import io.amelia.support.Encrypt;
-import io.amelia.support.IO;
-import io.amelia.support.Maps;
-import io.amelia.support.Strs;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityMaps;
+import io.amelia.extra.UtilityStrings;
 import io.amelia.support.Voluntary;
 
 public class ParcelLoader
@@ -78,7 +78,7 @@ public class ParcelLoader
 		if ( type == Type.AUTO_DETECT )
 			type = autoDetect( path.getFileName().toString() );
 
-		return decode( IO.readFileToString( path ), type );
+		return decode( UtilityIO.readFileToString( path ), type );
 	}
 
 	public static Parcel decode( @Nonnull File file, Type type ) throws IOException, ParcelableException.Error
@@ -86,12 +86,12 @@ public class ParcelLoader
 		if ( type == Type.AUTO_DETECT )
 			type = autoDetect( file.getName() );
 
-		return decode( IO.readFileToString( file ), type );
+		return decode( UtilityIO.readFileToString( file ), type );
 	}
 
 	public static Parcel decode( @Nonnull InputStream inputStream, Type type ) throws IOException, ParcelableException.Error
 	{
-		return decode( IO.readStreamToString( inputStream ), type );
+		return decode( UtilityIO.readStreamToString( inputStream ), type );
 	}
 
 	public static Parcel decode( @Nonnull String encoded, Type type ) throws ParcelableException.Error
@@ -117,37 +117,37 @@ public class ParcelLoader
 
 	public static Parcel decodeJson( Path path ) throws IOException, ParcelableException.Error
 	{
-		return decodeJson( IO.readFileToString( path ) );
+		return decodeJson( UtilityIO.readFileToString( path ) );
 	}
 
 	public static Parcel decodeJson( File file ) throws IOException, ParcelableException.Error
 	{
-		return decodeJson( IO.readFileToString( file ) );
+		return decodeJson( UtilityIO.readFileToString( file ) );
 	}
 
 	public static Parcel decodeJson( InputStream inputStream ) throws IOException, ParcelableException.Error
 	{
-		return decodeJson( IO.readStreamToString( inputStream ) );
+		return decodeJson( UtilityIO.readStreamToString( inputStream ) );
 	}
 
 	public static Map<String, Object> decodeJsonToMap( String jsonEncoded )
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) gson.fromJson( jsonEncoded, Map.class ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) gson.fromJson( jsonEncoded, Map.class ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodeJsonToMap( Path path ) throws IOException
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) gson.fromJson( IO.readFileToString( path ), Map.class ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) gson.fromJson( UtilityIO.readFileToString( path ), Map.class ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodeJsonToMap( File file ) throws IOException
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) gson.fromJson( IO.readFileToString( file ), Map.class ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) gson.fromJson( UtilityIO.readFileToString( file ), Map.class ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodeJsonToMap( InputStream inputStream ) throws IOException
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) gson.fromJson( IO.readStreamToString( inputStream ), Map.class ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) gson.fromJson( UtilityIO.readStreamToString( inputStream ), Map.class ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Parcel decodeList( String listEncoded ) throws ParcelableException.Error
@@ -172,32 +172,32 @@ public class ParcelLoader
 
 	public static Map<String, Object> decodeListToMap( InputStream inputStream )
 	{
-		return decodeListToMap( IO.readStreamToLines( inputStream, "#" ) );
+		return decodeListToMap( UtilityIO.readStreamToLines( inputStream, "#" ) );
 	}
 
 	public static Map<String, Object> decodeListToMap( String encodedList, String delimiter )
 	{
-		return decodeListToMap( Strs.split( encodedList, delimiter ).collect( Collectors.toList() ) );
+		return decodeListToMap( UtilityStrings.split( encodedList, delimiter ).collect( Collectors.toList() ) );
 	}
 
 	public static Map<String, Object> decodeListToMap( String encodedList )
 	{
-		return decodeListToMap( Strs.split( encodedList, "\n" ).collect( Collectors.toList() ) );
+		return decodeListToMap( UtilityStrings.split( encodedList, "\n" ).collect( Collectors.toList() ) );
 	}
 
 	public static Map<String, Object> decodeListToMap( List<String> encodedList )
 	{
-		return Maps.builder().increment( encodedList ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().increment( encodedList ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodeListToMap( Path path ) throws IOException
 	{
-		return decodeListToMap( IO.readFileToLines( path, "#" ) );
+		return decodeListToMap( UtilityIO.readFileToLines( path, "#" ) );
 	}
 
 	public static Map<String, Object> decodeListToMap( File file ) throws FileNotFoundException
 	{
-		return decodeListToMap( IO.readFileToLines( file, "#" ) );
+		return decodeListToMap( UtilityIO.readFileToLines( file, "#" ) );
 	}
 
 	public static Parcel decodeMap( Map<String, Object> map ) throws ParcelableException.Error
@@ -257,28 +257,28 @@ public class ParcelLoader
 		{
 			// Ignore - very unlikely to throw.
 		}
-		return Maps.builder( prop ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder( prop ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodePropToMap( InputStream inputStream ) throws IOException
 	{
 		Properties prop = new Properties();
 		prop.load( inputStream );
-		return Maps.builder( prop ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder( prop ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodePropToMap( Path path ) throws IOException
 	{
 		Properties prop = new Properties();
 		prop.load( Files.newInputStream( path ) );
-		return Maps.builder( prop ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder( prop ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodePropToMap( File file ) throws IOException
 	{
 		Properties prop = new Properties();
 		prop.load( new FileReader( file ) );
-		return Maps.builder( prop ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder( prop ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	/* public static Parcel decodeXml( String xml )
@@ -291,7 +291,7 @@ public class ParcelLoader
 		if ( type == Type.AUTO_DETECT )
 			type = autoDetect( path.getFileName().toString() );
 
-		return decodeToMap( IO.readFileToString( path ), type );
+		return decodeToMap( UtilityIO.readFileToString( path ), type );
 	}
 
 	public static Map<String, Object> decodeToMap( @Nonnull File file, Type type ) throws IOException
@@ -299,12 +299,12 @@ public class ParcelLoader
 		if ( type == Type.AUTO_DETECT )
 			type = autoDetect( file.getName() );
 
-		return decodeToMap( IO.readFileToString( file ), type );
+		return decodeToMap( UtilityIO.readFileToString( file ), type );
 	}
 
 	public static Map<String, Object> decodeToMap( @Nonnull InputStream inputStream, Type type ) throws IOException
 	{
-		return decodeToMap( IO.readStreamToString( inputStream ), type );
+		return decodeToMap( UtilityIO.readStreamToString( inputStream ), type );
 	}
 
 	public static Map<String, Object> decodeToMap( @Nonnull String encoded, Type type )
@@ -325,17 +325,17 @@ public class ParcelLoader
 
 	public static Parcel decodeYaml( Path path ) throws IOException, ParcelableException.Error
 	{
-		return decodeYaml( IO.readStreamToString( Files.newInputStream( path ) ) );
+		return decodeYaml( UtilityIO.readStreamToString( Files.newInputStream( path ) ) );
 	}
 
 	public static Parcel decodeYaml( File file ) throws IOException, ParcelableException.Error
 	{
-		return decodeYaml( IO.readFileToString( file ) );
+		return decodeYaml( UtilityIO.readFileToString( file ) );
 	}
 
 	public static Parcel decodeYaml( InputStream inputStream ) throws IOException, ParcelableException.Error
 	{
-		return decodeYaml( IO.readStreamToString( inputStream ) );
+		return decodeYaml( UtilityIO.readStreamToString( inputStream ) );
 	}
 
 	public static Parcel decodeYaml( String yamlEncoded ) throws ParcelableException.Error
@@ -345,22 +345,22 @@ public class ParcelLoader
 
 	public static Map<String, Object> decodeYamlToMap( String yamlEncoded )
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) yaml.load( yamlEncoded ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) yaml.load( yamlEncoded ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodeYamlToMap( Path path ) throws IOException
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) yaml.load( IO.readFileToString( path ) ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) yaml.load( UtilityIO.readFileToString( path ) ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodeYamlToMap( File file ) throws IOException
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) yaml.load( IO.readFileToString( file ) ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) yaml.load( UtilityIO.readFileToString( file ) ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static Map<String, Object> decodeYamlToMap( InputStream inputStream ) throws IOException
 	{
-		return Maps.builder().putAll( ( Map<?, ?> ) yaml.load( IO.readStreamToString( inputStream ) ) ).castTo( String.class, Object.class ).hashMap();
+		return UtilityMaps.builder().putAll( ( Map<?, ?> ) yaml.load( UtilityIO.readStreamToString( inputStream ) ) ).castTo( String.class, Object.class ).hashMap();
 	}
 
 	public static String encodeJson( Parcel encoded )

@@ -19,8 +19,8 @@ import javax.annotation.Nonnull;
 import io.amelia.data.ContainerBase;
 import io.amelia.engine.EngineCore;
 import io.amelia.lang.ConfigException;
-import io.amelia.support.IO;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
 import io.amelia.support.Streams;
 
 public class ConfigRegistry
@@ -103,9 +103,9 @@ public class ConfigRegistry
 
 	public static void clearCache( @Nonnull Path path, @Nonnegative long keepHistory )
 	{
-		Objs.notNull( path );
-		Objs.notNull( keepHistory );
-		Objs.notNegative( keepHistory );
+		UtilityObjects.notNull( path );
+		UtilityObjects.notNull( keepHistory );
+		UtilityObjects.notNegative( keepHistory );
 
 		try
 		{
@@ -113,7 +113,7 @@ public class ConfigRegistry
 				Streams.forEachWithException( Files.list( path ), file -> {
 					if ( Files.isDirectory( file ) )
 						clearCache( file, keepHistory );
-					else if ( Files.isRegularFile( file ) && IO.getLastModified( file ) < System.currentTimeMillis() - keepHistory * 24 * 60 * 60 )
+					else if ( Files.isRegularFile( file ) && UtilityIO.getLastModified( file ) < System.currentTimeMillis() - keepHistory * 24 * 60 * 60 )
 						Files.delete( file );
 				} );
 		}
@@ -171,9 +171,9 @@ public class ConfigRegistry
 	{
 		// WIP Copies config from resources and plugins to config directories.
 
-		Path configPath = Subsystem.Files.getPathAndCreate( Subsystem.Files.PATH_CONFIG );
+		Path configPath = Subsystem.FIOS.getPathAndCreate( Subsystem.FIOS.PATH_CONFIG );
 
-		IO.extractResourceDirectory( "config", configPath, io.amelia.foundation.ConfigRegistry.class );
+		UtilityIO.extractResourceDirectory( "config", configPath, io.amelia.foundation.ConfigRegistry.class );
 	}
 
 	private ConfigRegistry()

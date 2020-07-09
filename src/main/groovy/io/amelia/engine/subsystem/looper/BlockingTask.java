@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 
 import io.amelia.engine.EngineCore;
 import io.amelia.engine.subsystem.looper.queue.EntryAbstract;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityObjects;
 
 /**
  * Provides a runnable that blocks until the wrapped runnable is executed.
@@ -49,7 +49,7 @@ public final class BlockingTask<E extends Exception> implements LooperTask<E>
 
 	public boolean postAndWait( @Nonnegative long timeout )
 	{
-		Objs.notNegative( timeout );
+		UtilityObjects.notNegative( timeout );
 
 		synchronized ( this )
 		{

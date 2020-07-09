@@ -36,6 +36,8 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 
 import io.amelia.foundation.Kernel;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityStrings;
 
 /**
  * Provides Network Utilities
@@ -72,14 +74,14 @@ public class Http
 			is = conn.getInputStream();
 			os = Files.newOutputStream( destPath );
 
-			io.amelia.support.IO.copyLarge( is, os, progressConsumer == null ? null : ( progress, count ) -> {
+			UtilityIO.copyLarge( is, os, progressConsumer == null ? null : ( progress, count ) -> {
 				progressConsumer.accept( progress, length < 0 ? count : length );
 			} );
 		}
 		finally
 		{
-			io.amelia.support.IO.closeQuietly( is );
-			io.amelia.support.IO.closeQuietly( os );
+			UtilityIO.closeQuietly( is );
+			UtilityIO.closeQuietly( os );
 		}
 	}
 
@@ -105,7 +107,7 @@ public class Http
 		if ( str == null )
 			return null;
 		if ( hostnameNeedsNormalization( str ) )
-			str = io.amelia.support.Strs.toAscii( str );
+			str = UtilityStrings.toAscii( str );
 		// str = IDN.toASCII( str, IDN.ALLOW_UNASSIGNED );
 		return str.toLowerCase( Locale.US );
 	}
@@ -162,7 +164,7 @@ public class Http
 			if ( responseFamily == 2 )
 			{
 				stream = conn.getInputStream();
-				io.amelia.support.IO.closeQuietly( stream );
+				UtilityIO.closeQuietly( stream );
 				return true;
 			}
 			else
@@ -174,7 +176,7 @@ public class Http
 		}
 		finally
 		{
-			io.amelia.support.IO.closeQuietly( stream );
+			UtilityIO.closeQuietly( stream );
 		}
 	}
 
@@ -209,7 +211,7 @@ public class Http
 		}
 		finally
 		{
-			io.amelia.support.IO.closeQuietly( wr );
+			UtilityIO.closeQuietly( wr );
 		}
 
 		BufferedReader in = new BufferedReader( new InputStreamReader( con.getInputStream() ) );
@@ -224,7 +226,7 @@ public class Http
 		}
 		finally
 		{
-			io.amelia.support.IO.closeQuietly( in );
+			UtilityIO.closeQuietly( in );
 		}
 
 		return response.toString();

@@ -11,7 +11,7 @@ package io.amelia.lang;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.support.Exceptions;
+import io.amelia.extra.UtilityExceptions;
 
 /**
  * Used by AmeliaCommonLib to carry exception contextual information about an exception into the {@link io.amelia.foundation.Kernel}.
@@ -81,6 +81,6 @@ public interface ExceptionContext
 
 	default String printStackTraceToString()
 	{
-		return Exceptions.getStackTrace( getThrowable() );
+		return UtilityExceptions.getStackTrace( getThrowable() );
 	}
 }

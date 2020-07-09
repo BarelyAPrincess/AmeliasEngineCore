@@ -14,6 +14,8 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import io.amelia.extra.UtilityObjects;
+
 /**
  * Represents a function that accepts two arguments and produces a result.
  * Will throw {@link NullPointerException} if either the supplied argument or returned result are null.
@@ -44,7 +46,7 @@ public interface NonnullBiFunction<InputTypeA, InputTypeB, ResultType>
 	@Nonnull
 	default ResultType apply( @Nullable InputTypeA varA, @Nullable InputTypeB varB )
 	{
-		return io.amelia.support.Objs.notNull( apply0( io.amelia.support.Objs.notNull( varA ), io.amelia.support.Objs.notNull( varB ) ) );
+		return UtilityObjects.notNull( apply0( UtilityObjects.notNull( varA ), UtilityObjects.notNull( varB ) ) );
 	}
 
 	/**
@@ -76,7 +78,7 @@ public interface NonnullBiFunction<InputTypeA, InputTypeB, ResultType>
 	 */
 	default <V> io.amelia.support.NonnullBiFunction<InputTypeA, InputTypeB, V> andThen( Function<? super ResultType, ? extends V> after )
 	{
-		io.amelia.support.Objs.notNull( after );
+		UtilityObjects.notNull( after );
 		return ( InputTypeA t, InputTypeB u ) -> after.apply( apply( t, u ) );
 	}
 }

@@ -5,8 +5,8 @@ import java.util.Date;
 import java.util.logging.Level;
 
 import io.amelia.support.EnumColor;
-import io.amelia.support.Exceptions;
-import io.amelia.support.Strs;
+import io.amelia.extra.UtilityExceptions;
+import io.amelia.extra.UtilityStrings;
 
 public class EngineLogManager
 {
@@ -41,7 +41,7 @@ public class EngineLogManager
 		@Override
 		public void log( Level level, Class<?> source, Throwable cause )
 		{
-			Strs.split( Exceptions.getStackTrace( cause ), "\n" ).forEach( str -> log( level, source, str ) );
+			UtilityStrings.split( UtilityExceptions.getStackTrace( cause ), "\n" ).forEach( str -> log( level, source, str ) );
 		}
 	}
 }

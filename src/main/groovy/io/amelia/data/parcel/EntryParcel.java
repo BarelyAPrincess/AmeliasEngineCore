@@ -16,7 +16,7 @@ import io.amelia.engine.subsystem.looper.queue.DefaultQueue;
 import io.amelia.engine.subsystem.looper.queue.EntryAbstract;
 import io.amelia.engine.subsystem.looper.queue.EntryRunnable;
 import io.amelia.lang.ApplicationException;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityObjects;
 
 public class EntryParcel extends EntryRunnable
 {
@@ -27,8 +27,8 @@ public class EntryParcel extends EntryRunnable
 	{
 		super( queue );
 
-		Objs.notNull( parcelCarrier );
-		Objs.notNegative( when );
+		UtilityObjects.notNull( parcelCarrier );
+		UtilityObjects.notNegative( when );
 
 		parcelCarrier.markFinalized();
 

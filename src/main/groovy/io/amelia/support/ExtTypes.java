@@ -20,6 +20,8 @@ import io.amelia.data.ContainerWithValue;
 import io.amelia.foundation.ConfigData;
 import io.amelia.foundation.ConfigRegistry;
 import io.amelia.lang.ConfigException;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
 
 public class ExtTypes
 {
@@ -30,7 +32,7 @@ public class ExtTypes
 
 	public static Stream<String> getAllTypes()
 	{
-		return getConfigData().getChildren().map( ContainerWithValue::getValue ).filter( Voluntary::isPresent ).map( Voluntary::get ).map( Objs::castToString ).flatMap( str -> Strs.split( str, "," ) );
+		return getConfigData().getChildren().map( ContainerWithValue::getValue ).filter( Voluntary::isPresent ).map( Voluntary::get ).map( UtilityObjects::castToString ).flatMap( str -> UtilityStrings.split( str, "," ) );
 	}
 
 	private static ConfigData getConfigData()
@@ -41,8 +43,8 @@ public class ExtTypes
 	@Nonnull
 	public static Stream<String> getExtTypes( @Nonnull String filename )
 	{
-		String ext = Strs.regexCapture( filename, "\\.(\\w+)$" );
-		return Stream.concat( getConfigData().getChildren().filter( child -> child.getLocalName().equalsIgnoreCase( ext ) && child.hasValue() ).flatMap( child -> Strs.split( child.getString().get(), "," ) ), Stream.of( "application/octet-stream" ) );
+		String ext = UtilityStrings.regexCapture( filename, "\\.(\\w+)$" );
+		return Stream.concat( getConfigData().getChildren().filter( child -> child.getLocalName().equalsIgnoreCase( ext ) && child.hasValue() ).flatMap( child -> UtilityStrings.split( child.getString().get(), "," ) ), Stream.of( "application/octet-stream" ) );
 	}
 
 	@Nonnull

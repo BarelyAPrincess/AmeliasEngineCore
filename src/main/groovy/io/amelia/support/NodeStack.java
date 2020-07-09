@@ -26,7 +26,11 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import io.amelia.extra.UtilityArrs;
+import io.amelia.extra.UtilityMath;
 import io.amelia.lang.ApplicationException;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
 
 /**
  * Advanced class for handling namespaces with virtually any separator character.
@@ -52,7 +56,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	{
 		this.creator = creator;
 		this.glue = glue;
-		this.nodes = Arrs.removeEmptyStrings( nodes ); // Strs.toLowerCase()?
+		this.nodes = UtilityArrs.removeEmptyStrings( nodes ); // Strs.toLowerCase()?
 	}
 
 	protected NodeStack( NonnullBiFunction<Self, String[], Self> creator, String glue, Collection<String> nodes )
@@ -71,13 +75,13 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 
 	public Self append( @Nonnull String... names )
 	{
-		names = Arrs.removeEmptyStrings( names );
+		names = UtilityArrs.removeEmptyStrings( names );
 		if ( names.length == 0 )
 			return ( Self ) this;
 		for ( String name : names )
 			if ( name.contains( glue ) )
 				throw new IllegalArgumentException( "Appended string MUST NOT contain the glue character." );
-		this.nodes = Arrs.concat( this.nodes, names );
+		this.nodes = UtilityArrs.concat( this.nodes, names );
 		return ( Self ) this;
 	}
 
@@ -85,7 +89,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	{
 		if ( namespace.isEmpty() )
 			return ( Self ) this;
-		this.nodes = Arrs.concat( this.nodes, namespace.nodes );
+		this.nodes = UtilityArrs.concat( this.nodes, namespace.nodes );
 		return ( Self ) this;
 	}
 
@@ -93,16 +97,16 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	{
 		if ( namespace.isEmpty() )
 			return ( Self ) this;
-		return create( Arrs.concat( this.nodes, namespace.nodes ) );
+		return create( UtilityArrs.concat( this.nodes, namespace.nodes ) );
 	}
 
 	public Self appendAndCreate( @Nonnull String node )
 	{
-		if ( Strs.isEmpty( node ) )
+		if ( UtilityStrings.isEmpty( node ) )
 			return clone();
 		if ( node.contains( glue ) )
 			throw new IllegalArgumentException( "Appended string MUST NOT contain the glue character." );
-		return create( Arrs.concat( this.nodes, new String[] {node} ) );
+		return create( UtilityArrs.concat( this.nodes, new String[] {node} ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -114,17 +118,17 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 
 	public int compareTo( @Nonnull String other, String glue )
 	{
-		return Maths.normalizeCompare( matchPercentage( other, glue ), 100 );
+		return UtilityMath.normalizeCompare( matchPercentage( other, glue ), 100 );
 	}
 
 	public int compareTo( @Nonnull String other )
 	{
-		return Maths.normalizeCompare( matchPercentage( other ), 100 );
+		return UtilityMath.normalizeCompare( matchPercentage( other ), 100 );
 	}
 
 	public int compareTo( @Nonnull Self other )
 	{
-		return Maths.normalizeCompare( matchPercentage( other ), 100 );
+		return UtilityMath.normalizeCompare( matchPercentage( other ), 100 );
 	}
 
 	/**
@@ -304,7 +308,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	public String getString( @Nullable String glue, boolean escape )
 	{
 		final String newGlue = glue == null ? this.glue == null ? "." : this.glue : glue;
-		Stream<String> result = Arrays.stream( nodes ).filter( Strs::isNotEmpty );
+		Stream<String> result = Arrays.stream( nodes ).filter( UtilityStrings::isNotEmpty );
 		if ( escape )
 			result = result.map( n -> n.replace( newGlue, "\\" + newGlue ) );
 		return result.collect( Collectors.joining( newGlue ) );
@@ -347,7 +351,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 		if ( nodes.length <= depth )
 			return "";
 
-		return Strs.join( Arrays.copyOf( nodes, nodes.length - depth ), glue );
+		return UtilityStrings.join( Arrays.copyOf( nodes, nodes.length - depth ), glue );
 	}
 
 	public Self getSubNodes( int start )
@@ -367,7 +371,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 
 	public String getSubString( int start, int end )
 	{
-		return Strs.join( getSubStringArray( start, end ), glue );
+		return UtilityStrings.join( getSubStringArray( start, end ), glue );
 	}
 
 	public String[] getSubStringArray( int start, int end )
@@ -458,7 +462,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	{
 		String[] result = new String[nodes.length];
 		for ( int i = 0; i < nodes.length; i++ )
-			result[i] = Strs.toAscii( nodes[i] ).toLowerCase( Locale.US );
+			result[i] = UtilityStrings.toAscii( nodes[i] ).toLowerCase( Locale.US );
 		return create( result );
 	}
 
@@ -471,7 +475,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	{
 		String[] result = new String[nodes.length];
 		for ( int i = 0; i < nodes.length; i++ )
-			result[i] = Strs.toUnicode( nodes[i] ).toLowerCase( Locale.US );
+			result[i] = UtilityStrings.toUnicode( nodes[i] ).toLowerCase( Locale.US );
 		return create( result );
 	}
 
@@ -492,7 +496,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	 */
 	public Pattern prepareRegexp()
 	{
-		String regexpOrig = Strs.join( nodes, "\\." );
+		String regexpOrig = UtilityStrings.join( nodes, "\\." );
 		String regexp = regexpOrig.replace( "*", "(.*)" );
 
 		try
@@ -544,7 +548,7 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 			throw new IllegalArgumentException( "Nodes are empty" );
 		if ( nodes.length == 1 )
 			nodes = splitString( nodes[0] );
-		return Arrs.concat( nodes, this.nodes );
+		return UtilityArrs.concat( nodes, this.nodes );
 	}
 
 	public Self replace( String literal, String replacement )
@@ -561,8 +565,8 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 
 	private String[] splitString( @Nonnull String str, String separator )
 	{
-		separator = Objs.notEmptyOrDef( separator, glue );
-		return Strs.split( str, separator ).filter( Strs::isNotEmpty ).toArray( String[]::new );
+		separator = UtilityObjects.notEmptyOrDef( separator, glue );
+		return UtilityStrings.split( str, separator ).filter( UtilityStrings::isNotEmpty ).toArray( String[]::new );
 	}
 
 	private String[] splitString( @Nonnull String str )

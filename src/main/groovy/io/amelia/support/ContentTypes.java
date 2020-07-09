@@ -20,6 +20,8 @@ import io.amelia.data.ContainerWithValue;
 import io.amelia.foundation.ConfigData;
 import io.amelia.foundation.ConfigRegistry;
 import io.amelia.lang.ConfigException;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
 
 /**
  * Provides an easy translator for content-types specified from configuration.
@@ -35,7 +37,7 @@ public class ContentTypes
 
 	public static Stream<String> getAllTypes()
 	{
-		return getConfigData().getChildren().map( ContainerWithValue::getValue ).filter( io.amelia.support.Voluntary::isPresent ).map( io.amelia.support.Voluntary::get ).map( io.amelia.support.Objs::castToString );
+		return getConfigData().getChildren().map( ContainerWithValue::getValue ).filter( io.amelia.support.Voluntary::isPresent ).map( io.amelia.support.Voluntary::get ).map( UtilityObjects::castToString );
 	}
 
 	private static ConfigData getConfigData()
@@ -55,8 +57,8 @@ public class ContentTypes
 	@Nonnull
 	public static Stream<String> getContentTypes( @Nonnull String filename )
 	{
-		String ext = io.amelia.support.Strs.regexCapture( filename, "\\.(\\w+)$" );
-		return Stream.concat( getConfigData().getChildren().filter( child -> child.getLocalName().equalsIgnoreCase( ext ) && child.hasValue() ).flatMap( child -> io.amelia.support.Strs.split( child.getString().get(), "," ) ), Stream.of( "application/octet-stream" ) );
+		String ext = UtilityStrings.regexCapture( filename, "\\.(\\w+)$" );
+		return Stream.concat( getConfigData().getChildren().filter( child -> child.getLocalName().equalsIgnoreCase( ext ) && child.hasValue() ).flatMap( child -> UtilityStrings.split( child.getString().get(), "," ) ), Stream.of( "application/octet-stream" ) );
 	}
 
 	@Nonnull

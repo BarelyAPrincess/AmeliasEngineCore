@@ -7,13 +7,13 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.util.Optional;
 
 import io.netty.buffer.Unpooled;
 
-public class Maths
+public class UtilityMath
 {
 	/**
 	 * Returns the sum of the two parameters, or throws an exception if the resulting sum would
@@ -52,7 +52,7 @@ public class Maths
 
 		try
 		{
-			Long.parseLong( Objs.castToString( value ) );
+			Long.parseLong( UtilityObjects.castToString( value ) );
 			return true;
 		}
 		catch ( NumberFormatException e )
@@ -62,7 +62,7 @@ public class Maths
 
 		try
 		{
-			Float.parseFloat( Objs.castToString( value ) );
+			Float.parseFloat( UtilityObjects.castToString( value ) );
 			return true;
 		}
 		catch ( NumberFormatException ee )

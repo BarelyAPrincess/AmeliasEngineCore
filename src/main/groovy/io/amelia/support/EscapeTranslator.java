@@ -13,6 +13,8 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import io.amelia.extra.UtilityMaps;
+
 class EscapeTranslator
 {
 	private static final Map<String, String> BASIC_ESCAPE;
@@ -22,7 +24,7 @@ class EscapeTranslator
 
 	static
 	{
-		io.amelia.support.Maps.MapBuilder<String, String> iso88591Builder = io.amelia.support.Maps.builder();
+		UtilityMaps.MapBuilder<String, String> iso88591Builder = UtilityMaps.builder();
 		iso88591Builder.put( "\u00A0", "&nbsp;" ); // non-breaking space
 		iso88591Builder.put( "\u00A1", "&iexcl;" ); // inverted exclamation mark
 		iso88591Builder.put( "\u00A2", "&cent;" ); // cent sign
@@ -121,7 +123,7 @@ class EscapeTranslator
 		iso88591Builder.put( "\u00FF", "&yuml;" ); // � - lowercase y, umlaut
 		ISO8859_1_ESCAPE = iso88591Builder.hashMap();
 
-		io.amelia.support.Maps.MapBuilder<String, String> htmlBuilder = io.amelia.support.Maps.builder();
+		UtilityMaps.MapBuilder<String, String> htmlBuilder = UtilityMaps.builder();
 		// <!-- Latin Extended-B -->
 		htmlBuilder.put( "\u0192", "&fnof;" ); // latin small f with hook = function= florin, U+0192 ISOtech -->
 		// <!-- Greek -->
@@ -318,14 +320,14 @@ class EscapeTranslator
 		htmlBuilder.put( "\u20AC", "&euro;" ); // -- euro sign, U+20AC NEW -->
 		HTML_ESCAPE = htmlBuilder.hashMap();
 
-		io.amelia.support.Maps.MapBuilder<String, String> basicBuilder = io.amelia.support.Maps.builder();
+		UtilityMaps.MapBuilder<String, String> basicBuilder = UtilityMaps.builder();
 		basicBuilder.put( "\"", "&quot;" ); // " - double-quote
 		basicBuilder.put( "&", "&amp;" ); // & - ampersand
 		basicBuilder.put( "<", "&lt;" ); // < - less-than
 		basicBuilder.put( ">", "&gt;" ); // > - greater-than
 		BASIC_ESCAPE = basicBuilder.hashMap();
 
-		io.amelia.support.Maps.MapBuilder<String, String> ctrlCharBuilder = io.amelia.support.Maps.builder();
+		UtilityMaps.MapBuilder<String, String> ctrlCharBuilder = UtilityMaps.builder();
 		basicBuilder.put( "\b", "\\b" );
 		basicBuilder.put( "\n", "\\n" );
 		basicBuilder.put( "\t", "\\t" );
@@ -336,12 +338,12 @@ class EscapeTranslator
 
 	public static io.amelia.support.EscapeTranslator APOS_ESCAPE()
 	{
-		return new io.amelia.support.EscapeTranslator( io.amelia.support.Maps.builder( "'", "&apos;" ).hashMap() );
+		return new io.amelia.support.EscapeTranslator( UtilityMaps.builder( "'", "&apos;" ).hashMap() );
 	}
 
 	public static io.amelia.support.EscapeTranslator APOS_UNESCAPE()
 	{
-		return new io.amelia.support.EscapeTranslator( io.amelia.support.Maps.builder( "&apos;", "'" ).hashMap() );
+		return new io.amelia.support.EscapeTranslator( UtilityMaps.builder( "&apos;", "'" ).hashMap() );
 	}
 
 	public static io.amelia.support.EscapeTranslator BASIC_ESCAPE()
@@ -351,7 +353,7 @@ class EscapeTranslator
 
 	public static io.amelia.support.EscapeTranslator BASIC_UNESCAPE()
 	{
-		return new io.amelia.support.EscapeTranslator( io.amelia.support.Maps.flipKeyValue( BASIC_ESCAPE ) );
+		return new io.amelia.support.EscapeTranslator( UtilityMaps.flipKeyValue( BASIC_ESCAPE ) );
 	}
 
 	public static io.amelia.support.EscapeTranslator HTML_ESCAPE()
@@ -361,7 +363,7 @@ class EscapeTranslator
 
 	public static io.amelia.support.EscapeTranslator HTML_UNESCAPE()
 	{
-		return new io.amelia.support.EscapeTranslator( io.amelia.support.Maps.flipKeyValue( ISO8859_1_ESCAPE ), io.amelia.support.Maps.flipKeyValue( HTML_ESCAPE ) );
+		return new io.amelia.support.EscapeTranslator( UtilityMaps.flipKeyValue( ISO8859_1_ESCAPE ), UtilityMaps.flipKeyValue( HTML_ESCAPE ) );
 	}
 
 	public static io.amelia.support.EscapeTranslator ISO8859_1_ESCAPE()
@@ -371,7 +373,7 @@ class EscapeTranslator
 
 	public static io.amelia.support.EscapeTranslator ISO8859_1_UNESCAPE()
 	{
-		return new io.amelia.support.EscapeTranslator( io.amelia.support.Maps.flipKeyValue( ISO8859_1_ESCAPE ) );
+		return new io.amelia.support.EscapeTranslator( UtilityMaps.flipKeyValue( ISO8859_1_ESCAPE ) );
 	}
 
 	public static io.amelia.support.EscapeTranslator JAVA_CTRL_CHARS_ESCAPE()
@@ -381,7 +383,7 @@ class EscapeTranslator
 
 	public static io.amelia.support.EscapeTranslator JAVA_CTRL_CHARS_UNESCAPE()
 	{
-		return new io.amelia.support.EscapeTranslator( io.amelia.support.Maps.flipKeyValue( JAVA_CTRL_CHARS_ESCAPE ) );
+		return new io.amelia.support.EscapeTranslator( UtilityMaps.flipKeyValue( JAVA_CTRL_CHARS_ESCAPE ) );
 	}
 
 	private final Map<String, CharSequence> escapes = new TreeMap<>( Comparator.comparingInt( s -> Math.abs( ( s ).length() ) ) );
@@ -392,7 +394,7 @@ class EscapeTranslator
 		for ( Map<String, String> map : escapeArray )
 			escapes.putAll( map );
 
-		longest = io.amelia.support.Maps.first( escapes ).map( CharSequence::length ).orElse( 0 );
+		longest = UtilityMaps.first( escapes ).map( CharSequence::length ).orElse( 0 );
 	}
 
 	public final String translate( final CharSequence input )

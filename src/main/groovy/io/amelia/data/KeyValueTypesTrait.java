@@ -23,12 +23,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import io.amelia.lang.ApplicationException;
-import io.amelia.support.IO;
-import io.amelia.support.Maths;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityMath;
 import io.amelia.support.Namespace;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityObjects;
 import io.amelia.support.Streams;
-import io.amelia.support.Strs;
+import io.amelia.extra.UtilityStrings;
 import io.amelia.support.Voluntary;
 import io.amelia.support.VoluntaryBoolean;
 import io.amelia.support.VoluntaryLong;
@@ -52,7 +52,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 {
 	default VoluntaryBoolean getBoolean()
 	{
-		return VoluntaryBoolean.ofNullable( getValue( getDefaultKey() ).map( Objs::castToBoolean ).orElse( null ) );
+		return VoluntaryBoolean.ofNullable( getValue( getDefaultKey() ).map( UtilityObjects::castToBoolean ).orElse( null ) );
 	}
 
 	default Boolean getBoolean( @Nonnull TypeBase.TypeBoolean type )
@@ -67,7 +67,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default VoluntaryBoolean getBoolean( @Nonnull Namespace key )
 	{
-		return VoluntaryBoolean.ofNullable( getValue( key ).map( Objs::castToBoolean ).orElse( null ) );
+		return VoluntaryBoolean.ofNullable( getValue( key ).map( UtilityObjects::castToBoolean ).orElse( null ) );
 	}
 
 	default Voluntary<Color> getColor()
@@ -114,7 +114,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default OptionalDouble getDouble( @Nonnull Namespace key )
 	{
-		return Objs.ifPresent( getValue( key ).map( Objs::castToDouble ), OptionalDouble::of, OptionalDouble::empty );
+		return UtilityObjects.ifPresent( getValue( key ).map( UtilityObjects::castToDouble ), OptionalDouble::of, OptionalDouble::empty );
 	}
 
 	default <T extends Enum<T>> Voluntary<T> getEnum( @Nonnull Class<T> enumClass )
@@ -154,7 +154,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default OptionalInt getInteger( @Nonnull Namespace key )
 	{
-		return Objs.ifPresent( getValue( key ).map( Objs::castToInt ), OptionalInt::of, OptionalInt::empty );
+		return UtilityObjects.ifPresent( getValue( key ).map( UtilityObjects::castToInt ), OptionalInt::of, OptionalInt::empty );
 	}
 
 	default <T> Voluntary<List<T>> getList()
@@ -199,7 +199,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default <T> Voluntary<List<T>> getList( @Nonnull Namespace key, @Nonnull Class<T> expectedObjectClass )
 	{
-		return getValue( key ).filter( v -> v instanceof List ).map( v -> Objs.castList( ( List<?> ) v, expectedObjectClass ) );
+		return getValue( key ).filter( v -> v instanceof List ).map( v -> UtilityObjects.castList( ( List<?> ) v, expectedObjectClass ) );
 	}
 
 	default VoluntaryLong getLong()
@@ -219,7 +219,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default VoluntaryLong getLong( @Nonnull Namespace key )
 	{
-		return Objs.ifPresent( getValue( key ).map( Objs::castToLong ), VoluntaryLong::of, VoluntaryLong::empty );
+		return UtilityObjects.ifPresent( getValue( key ).map( UtilityObjects::castToLong ), VoluntaryLong::of, VoluntaryLong::empty );
 	}
 
 	default Voluntary<String> getString()
@@ -239,7 +239,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default Voluntary<String> getString( @Nonnull Namespace key )
 	{
-		return getValue( key ).map( Objs::castToString );
+		return getValue( key ).map( UtilityObjects::castToString );
 	}
 
 	default <T> Voluntary<Class<T>> getStringAsClass()
@@ -264,7 +264,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default <T> Voluntary<Class<T>> getStringAsClass( @Nonnull Namespace key, @Nullable Class<T> expectedClass )
 	{
-		return getString( key ).map( str -> ( Class<T> ) Objs.getClassByName( str ) ).filter( cls -> expectedClass != null && expectedClass.isAssignableFrom( cls ) );
+		return getString( key ).map( str -> ( Class<T> ) UtilityObjects.getClassByName( str ) ).filter( cls -> expectedClass != null && expectedClass.isAssignableFrom( cls ) );
 	}
 
 	default Voluntary<File> getStringAsFile( @Nonnull File rel )
@@ -294,12 +294,12 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default Voluntary<File> getStringAsFile( @Nonnull Namespace key, @Nonnull File rel )
 	{
-		return getString( key ).map( s -> IO.buildFile( rel, s ) );
+		return getString( key ).map( s -> UtilityIO.buildFile( rel, s ) );
 	}
 
 	default Voluntary<File> getStringAsFile( @Nonnull Namespace key )
 	{
-		return getString( key ).map( IO::buildFile );
+		return getString( key ).map( UtilityIO::buildFile );
 	}
 
 	default Voluntary<Path> getStringAsPath( @Nonnull Path rel )
@@ -329,12 +329,12 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default Voluntary<Path> getStringAsPath( @Nonnull Namespace key, @Nonnull Path rel )
 	{
-		return getString( key ).map( s -> IO.buildPath( rel, s ) );
+		return getString( key ).map( s -> UtilityIO.buildPath( rel, s ) );
 	}
 
 	default Voluntary<Path> getStringAsPath( @Nonnull Namespace key )
 	{
-		return getString( key ).map( IO::buildPath );
+		return getString( key ).map( UtilityIO::buildPath );
 	}
 
 	default Voluntary<List<String>> getStringList()
@@ -402,7 +402,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 			return Stream.empty();
 		if ( value instanceof List )
 			return ( ( List<String> ) value ).stream();
-		return Stream.of( value ).map( Objs::castToString ).flatMap( s -> Strs.split( s, delimiter ) );
+		return Stream.of( value ).map( UtilityObjects::castToString ).flatMap( s -> UtilityStrings.split( s, delimiter ) );
 	}
 
 	default <V> V getValue( @Nonnull TypeBase.TypeWithDefault<V> type )
@@ -441,7 +441,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default boolean isEmpty( @Nonnull Namespace key )
 	{
-		return getValue( key ).map( Objs::isEmpty ).orElse( true );
+		return getValue( key ).map( UtilityObjects::isEmpty ).orElse( true );
 	}
 
 	default boolean isList()
@@ -486,7 +486,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default boolean isNull( @Nonnull Namespace key )
 	{
-		return getValue( key ).map( Objs::isNull ).orElse( true );
+		return getValue( key ).map( UtilityObjects::isNull ).orElse( true );
 	}
 
 	default boolean isNumber()
@@ -501,7 +501,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default boolean isNumber( Namespace key )
 	{
-		return getValue( key ).map( Maths::isNumber ).orElse( false );
+		return getValue( key ).map( UtilityMath::isNumber ).orElse( false );
 	}
 
 	default boolean isSet()
@@ -531,7 +531,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default boolean isTrue( boolean def )
 	{
-		return getValue( getDefaultKey() ).map( Objs::isTrue ).orElse( def );
+		return getValue( getDefaultKey() ).map( UtilityObjects::isTrue ).orElse( def );
 	}
 
 	default boolean isTrue( @Nonnull String key )
@@ -551,7 +551,7 @@ public interface KeyValueTypesTrait<ExceptionClass extends ApplicationException.
 
 	default boolean isTrue( @Nonnull Namespace key, boolean def )
 	{
-		return getValue( key ).map( Objs::isTrue ).orElse( def );
+		return getValue( key ).map( UtilityObjects::isTrue ).orElse( def );
 	}
 
 	default boolean isType( @Nonnull String key, @Nonnull Class<?> type )

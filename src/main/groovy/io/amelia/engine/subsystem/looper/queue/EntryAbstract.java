@@ -14,8 +14,8 @@ import javax.annotation.Nonnull;
 import io.amelia.engine.EngineCore;
 import io.amelia.engine.subsystem.looper.AbstractLooper;
 import io.amelia.support.DateAndTime;
-import io.amelia.support.Exceptions;
-import io.amelia.support.Maths;
+import io.amelia.extra.UtilityExceptions;
+import io.amelia.extra.UtilityMath;
 
 public abstract class EntryAbstract implements Comparable<EntryAbstract>
 {
@@ -64,12 +64,12 @@ public abstract class EntryAbstract implements Comparable<EntryAbstract>
 	@Override
 	public int compareTo( @Nonnull EntryAbstract entryAbstract )
 	{
-		return Maths.nonZero( Long.compare( getWhen(), entryAbstract.getWhen() ), Long.compare( getId(), entryAbstract.getId() ) ).orElse( 0 );
+		return UtilityMath.nonZero( Long.compare( getWhen(), entryAbstract.getWhen() ), Long.compare( getId(), entryAbstract.getId() ) ).orElse( 0 );
 	}
 
 	public String getCreationStackTrace()
 	{
-		return Exceptions.stackTraceToString( stackTraceElements );
+		return UtilityExceptions.stackTraceToString( stackTraceElements );
 	}
 
 	public long getCreationTimestamp()

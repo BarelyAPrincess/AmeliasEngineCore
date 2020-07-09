@@ -9,6 +9,8 @@
  */
 package io.amelia.support;
 
+import io.amelia.extra.UtilityArrs;
+
 public class ByteStack
 {
 	private byte[] bytes;
@@ -20,12 +22,12 @@ public class ByteStack
 
 	public void push( byte b )
 	{
-		bytes = io.amelia.support.Arrs.push( bytes, b );
+		bytes = UtilityArrs.push( bytes, b );
 	}
 
 	public void pop()
 	{
-		bytes = io.amelia.support.Arrs.pop( bytes );
+		bytes = UtilityArrs.pop( bytes );
 	}
 
 	public byte peek()

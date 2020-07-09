@@ -12,6 +12,8 @@ package io.amelia.support;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import io.amelia.extra.UtilityObjects;
+
 /**
  * Represents a function that accepts one argument and produces a result.
  * Will throw {@link NullPointerException} if either the supplied argument or returned result are null.
@@ -57,14 +59,14 @@ public interface NonnullFunction<InputType, ResultType>
 	 */
 	default <V> io.amelia.support.NonnullFunction<InputType, V> andThen( io.amelia.support.NonnullFunction<? super ResultType, ? extends V> after )
 	{
-		io.amelia.support.Objs.notNull( after );
+		UtilityObjects.notNull( after );
 		return ( InputType t ) -> after.apply( apply( t ) );
 	}
 
 	@Nonnull
 	default ResultType apply( @Nullable InputType var )
 	{
-		return io.amelia.support.Objs.notNull( apply0( io.amelia.support.Objs.notNull( var ) ) );
+		return UtilityObjects.notNull( apply0( UtilityObjects.notNull( var ) ) );
 	}
 
 	/**
@@ -96,7 +98,7 @@ public interface NonnullFunction<InputType, ResultType>
 	 */
 	default <V> io.amelia.support.NonnullFunction<V, ResultType> compose( io.amelia.support.NonnullFunction<? super V, ? extends InputType> before )
 	{
-		io.amelia.support.Objs.notNull( before );
+		UtilityObjects.notNull( before );
 		return ( V v ) -> apply( before.apply( v ) );
 	}
 }

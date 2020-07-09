@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,12 +32,12 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class Lists
+public class UtilityLists
 {
 	public static <V> V add( @Nonnull List<V> list, @Nonnull V obj )
 	{
-		io.amelia.support.Objs.notNull( list );
-		io.amelia.support.Objs.notNull( obj );
+		UtilityObjects.notNull( list );
+		UtilityObjects.notNull( obj );
 
 		list.add( obj );
 		return obj;
@@ -101,7 +101,7 @@ public class Lists
 	 */
 	public static <V> V findAndReplace( List<V> list, Function<? super V, ? extends V> function )
 	{
-		io.amelia.support.Objs.notNull( function );
+		UtilityObjects.notNull( function );
 
 		for ( V oldValue : list )
 		{
@@ -205,8 +205,8 @@ public class Lists
 
 	public static <T> boolean removeIf( Set<T> list, Predicate<T> filter )
 	{
-		io.amelia.support.Objs.notNull( list );
-		io.amelia.support.Objs.notNull( filter );
+		UtilityObjects.notNull( list );
+		UtilityObjects.notNull( filter );
 
 		boolean removed = false;
 		final Iterator<T> each = list.iterator();
@@ -224,8 +224,8 @@ public class Lists
 
 	public static <T> boolean removeIf( List<T> list, Predicate<T> filter )
 	{
-		io.amelia.support.Objs.notNull( list );
-		io.amelia.support.Objs.notNull( filter );
+		UtilityObjects.notNull( list );
+		UtilityObjects.notNull( filter );
 
 		boolean removed = false;
 		final Iterator<T> each = list.iterator();
@@ -243,9 +243,9 @@ public class Lists
 
 	public static <T> List<T> subList( @Nonnull List<T> list, int start, int length )
 	{
-		io.amelia.support.Objs.notNull( list );
-		io.amelia.support.Objs.notNegative( start );
-		io.amelia.support.Objs.notNegative( length );
+		UtilityObjects.notNull( list );
+		UtilityObjects.notNegative( start );
+		UtilityObjects.notNegative( length );
 
 		return list.stream().skip( start ).limit( length ).collect( Collectors.toList() );
 	}
@@ -257,7 +257,7 @@ public class Lists
 		return list.stream().map( function ).filter( Objects::nonNull ).collect( Collectors.toList() );
 	}
 
-	private Lists()
+	private UtilityLists()
 	{
 		// Static Helper
 	}

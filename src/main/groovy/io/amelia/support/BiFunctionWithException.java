@@ -9,6 +9,8 @@
  */
 package io.amelia.support;
 
+import io.amelia.extra.UtilityObjects;
+
 @FunctionalInterface
 public interface BiFunctionWithException<T, U, R, E extends Exception>
 {
@@ -29,7 +31,7 @@ public interface BiFunctionWithException<T, U, R, E extends Exception>
 	 */
 	default <V> io.amelia.support.BiFunctionWithException<T, U, V, E> andThen( io.amelia.support.FunctionWithException<? super R, ? extends V, E> after ) throws E
 	{
-		io.amelia.support.Objs.isNotNull( after );
+		UtilityObjects.isNotNull( after );
 		return ( T t, U u ) -> after.apply( apply( t, u ) );
 	}
 

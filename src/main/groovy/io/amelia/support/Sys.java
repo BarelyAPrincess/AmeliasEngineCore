@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import io.amelia.foundation.Kernel;
+import io.amelia.extra.UtilityIO;
 
 /**
  * Provides easy access to the server metadata plus operating system and jvm information
@@ -79,7 +80,7 @@ public class Sys
 			Path path = Paths.get( io.amelia.support.Sys.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
 			if ( Files.isDirectory( path ) || !path.endsWith( ".jar" ) )
 				return def;
-			return io.amelia.support.IO.getLocalName( path );
+			return UtilityIO.getLocalName( path );
 		}
 		catch ( Exception e )
 		{

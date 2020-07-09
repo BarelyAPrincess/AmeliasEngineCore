@@ -18,6 +18,8 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import io.amelia.extra.UtilityObjects;
+
 /**
  * All supported color values for chat
  *
@@ -220,8 +222,8 @@ public enum EnumColor
 	 */
 	public static io.amelia.support.EnumColor getByChar( String code )
 	{
-		io.amelia.support.Objs.notNull( code, "Code cannot be null" );
-		io.amelia.support.Objs.notNegative( code.length(), "Code must have at least one char" );
+		UtilityObjects.notNull( code, "Code cannot be null" );
+		UtilityObjects.notNegative( code.length(), "Code must have at least one char" );
 
 		return BY_CHAR.get( code.charAt( 0 ) );
 	}

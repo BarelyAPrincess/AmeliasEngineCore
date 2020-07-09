@@ -18,6 +18,8 @@ import java.util.regex.PatternSyntaxException;
 
 import javax.annotation.Nonnull;
 
+import io.amelia.extra.UtilityStrings;
+
 public class AsciiLower implements CharSequence, Comparable<CharSequence>
 {
 	/* Common private utility method used to bounds check the byte array
@@ -77,7 +79,7 @@ public class AsciiLower implements CharSequence, Comparable<CharSequence>
 	 */
 	public AsciiLower( char value[] )
 	{
-		value = Strs.toLowerCase( value );
+		value = UtilityStrings.toLowerCase( value );
 		this.value = Arrays.copyOf( value, value.length );
 	}
 
@@ -113,7 +115,7 @@ public class AsciiLower implements CharSequence, Comparable<CharSequence>
 		// Note: offset or count might be near -1>>>1.
 		if ( offset > value.length - count )
 			throw new StringIndexOutOfBoundsException( offset + count );
-		this.value = Strs.toLowerCase( Arrays.copyOfRange( value, offset, offset + count ) );
+		this.value = UtilityStrings.toLowerCase( Arrays.copyOfRange( value, offset, offset + count ) );
 	}
 
 	/**
@@ -143,7 +145,7 @@ public class AsciiLower implements CharSequence, Comparable<CharSequence>
 		if ( charsetName == null )
 			throw new NullPointerException( "charsetName" );
 		checkBounds( bytes, offset, length );
-		this.value = Strs.toLowerCase( Strs.StringCoding.decode( charsetName, bytes, offset, length ) );
+		this.value = UtilityStrings.toLowerCase( UtilityStrings.StringCoding.decode( charsetName, bytes, offset, length ) );
 	}
 
 	/**
@@ -172,7 +174,7 @@ public class AsciiLower implements CharSequence, Comparable<CharSequence>
 		if ( charset == null )
 			throw new NullPointerException( "charset" );
 		checkBounds( bytes, offset, length );
-		this.value = Strs.toLowerCase( Strs.StringCoding.decode( charset, bytes, offset, length ) );
+		this.value = UtilityStrings.toLowerCase( UtilityStrings.StringCoding.decode( charset, bytes, offset, length ) );
 	}
 
 	/**
@@ -241,7 +243,7 @@ public class AsciiLower implements CharSequence, Comparable<CharSequence>
 	public AsciiLower( byte bytes[], int offset, int length )
 	{
 		checkBounds( bytes, offset, length );
-		this.value = Strs.toLowerCase( Strs.StringCoding.decode( bytes, offset, length ) );
+		this.value = UtilityStrings.toLowerCase( UtilityStrings.StringCoding.decode( bytes, offset, length ) );
 	}
 
 	/**

@@ -20,6 +20,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import io.amelia.foundation.Kernel;
+import io.amelia.extra.UtilityObjects;
 
 /**
  * An expanded container object which may or may not contain a non-null value and/or exception, is similar to {@link Optional} but adds error handling.
@@ -235,7 +236,7 @@ public class Voluntary<Type>
 	 */
 	Voluntary( Type value )
 	{
-		this.value = Objs.notNull( value instanceof io.amelia.support.Voluntary ? ( ( io.amelia.support.Voluntary<Type> ) value ).orElse( null ) : value );
+		this.value = UtilityObjects.notNull( value instanceof io.amelia.support.Voluntary ? ( ( io.amelia.support.Voluntary<Type> ) value ).orElse( null ) : value );
 	}
 
 	/**
@@ -284,7 +285,7 @@ public class Voluntary<Type>
 	 */
 	public io.amelia.support.Voluntary<Type> filter( Predicate<? super Type> predicate )
 	{
-		Objs.notNull( predicate );
+		UtilityObjects.notNull( predicate );
 		if ( !isPresent() )
 			return this;
 		else
@@ -312,18 +313,18 @@ public class Voluntary<Type>
 	 */
 	public <U, Cause extends Exception> io.amelia.support.Voluntary<U> flatMap( @Nonnull FunctionWithException<? super Type, io.amelia.support.Voluntary<U>, Cause> mapper ) throws Cause
 	{
-		Objs.notNull( mapper );
+		UtilityObjects.notNull( mapper );
 		if ( isPresent() )
-			return Objs.notNull( mapper.apply( value ) );
+			return UtilityObjects.notNull( mapper.apply( value ) );
 		else
 			return empty();
 	}
 
 	public <U, Cause extends Exception> io.amelia.support.Voluntary<U> flatMapCompatible( @Nonnull FunctionWithException<? super Type, Optional<U>, Cause> mapper ) throws Cause
 	{
-		Objs.notNull( mapper );
+		UtilityObjects.notNull( mapper );
 		if ( isPresent() )
-			return of( Objs.notNull( mapper.apply( value ) ) );
+			return of( UtilityObjects.notNull( mapper.apply( value ) ) );
 		else
 			return empty();
 	}

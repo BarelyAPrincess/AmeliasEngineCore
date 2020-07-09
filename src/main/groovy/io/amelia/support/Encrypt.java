@@ -24,6 +24,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import io.amelia.extra.UtilityArrs;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityStrings;
+
 /**
  * Provides basic encryption and randomizing functions
  */
@@ -84,7 +88,7 @@ public class Encrypt
 		for ( int i = 192; i < 256; i++ )
 			newRandomCharMap.add( ( char ) i );
 
-		randomCharMap = io.amelia.support.Arrs.toCharArray( newRandomCharMap );
+		randomCharMap = UtilityArrs.toCharArray( newRandomCharMap );
 
 		Set<Character> newAllowedCharMap = new HashSet<>();
 
@@ -96,7 +100,7 @@ public class Encrypt
 		for ( int i = 192; i < 256; i++ )
 			newAllowedCharMap.add( ( char ) i );
 
-		allowedCharMap = io.amelia.support.Arrs.toCharArray( newAllowedCharMap );
+		allowedCharMap = UtilityArrs.toCharArray( newAllowedCharMap );
 	}
 
 	public static byte[] base64Decode( String str )
@@ -169,12 +173,12 @@ public class Encrypt
 
 	public static byte[] md5( InputStream is ) throws IOException
 	{
-		return getDigest( MD5 ).digest( IO.readStreamToBytes( is ) );
+		return getDigest( MD5 ).digest( UtilityIO.readStreamToBytes( is ) );
 	}
 
 	public static byte[] md5( final String str )
 	{
-		return getDigest( MD5 ).digest( io.amelia.support.Strs.decodeUtf8( str ) );
+		return getDigest( MD5 ).digest( UtilityStrings.decodeUtf8( str ) );
 	}
 
 	public static String md5Hex( byte[] bytes )
@@ -184,7 +188,7 @@ public class Encrypt
 
 	public static String md5Hex( InputStream is ) throws IOException
 	{
-		return md5Hex( IO.readStreamToString( is ) );
+		return md5Hex( UtilityIO.readStreamToString( is ) );
 	}
 
 	public static String md5Hex( String str )
@@ -192,7 +196,7 @@ public class Encrypt
 		if ( str == null )
 			return null;
 
-		return String.format( "%040x", new BigInteger( 1, md5( io.amelia.support.Strs.decodeUtf8( str ) ) ) );
+		return String.format( "%040x", new BigInteger( 1, md5( UtilityStrings.decodeUtf8( str ) ) ) );
 	}
 
 	public static String rand()
@@ -221,10 +225,10 @@ public class Encrypt
 			allowedChars = new String[0];
 
 		if ( numbers )
-			allowedChars = io.amelia.support.Arrs.concat( allowedChars, new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"} );
+			allowedChars = UtilityArrs.concat( allowedChars, new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"} );
 
 		if ( letters )
-			allowedChars = io.amelia.support.Arrs.concat( allowedChars, new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"} );
+			allowedChars = UtilityArrs.concat( allowedChars, new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"} );
 
 		StringBuilder rtn = new StringBuilder();
 		for ( int i = 0; i < length; i++ )

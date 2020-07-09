@@ -11,6 +11,8 @@ package io.amelia.support;
 
 import java.util.function.Function;
 
+import io.amelia.extra.UtilityObjects;
+
 /**
  * Represents a function that accepts three arguments and produces a result.
  * This is the two-arity specialization of {@link Function}.
@@ -42,7 +44,7 @@ public interface TriFunction<T, Y, U, R>
 	 */
 	default <V> io.amelia.support.TriFunction<T, Y, U, V> andThen( Function<? super R, ? extends V> after )
 	{
-		Objs.isNotNull( after );
+		UtilityObjects.isNotNull( after );
 		return ( T t, Y y, U u ) -> after.apply( apply( t, y, u ) );
 	}
 

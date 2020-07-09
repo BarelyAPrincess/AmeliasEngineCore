@@ -21,6 +21,8 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
+import io.amelia.extra.UtilityObjects;
+
 /**
  * Wraps an {@link ArrayList<WeakReference>>} and provides methods that auto remove dereferenced values.
  *
@@ -190,7 +192,7 @@ public class WeakReferenceList<Type> implements List<Type>
 	@Override
 	public Stream<Type> stream()
 	{
-		return list.stream().map( WeakReference::get ).filter( io.amelia.support.Objs::isNotNull );
+		return list.stream().map( WeakReference::get ).filter( UtilityObjects::isNotNull );
 	}
 
 	@Nonnull

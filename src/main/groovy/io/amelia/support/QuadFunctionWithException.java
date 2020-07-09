@@ -9,6 +9,8 @@
  */
 package io.amelia.support;
 
+import io.amelia.extra.UtilityObjects;
+
 @FunctionalInterface
 public interface QuadFunctionWithException<T, Y, U, W, R, E extends Exception>
 {
@@ -29,7 +31,7 @@ public interface QuadFunctionWithException<T, Y, U, W, R, E extends Exception>
 	 */
 	default <V> io.amelia.support.QuadFunctionWithException<T, Y, U, W, V, E> andThen( FunctionWithException<? super R, ? extends V, E> after ) throws E
 	{
-		io.amelia.support.Objs.isNotNull( after );
+		UtilityObjects.isNotNull( after );
 		return ( T t, Y y, U u, W w ) -> after.apply( apply( t, y, u, w ) );
 	}
 

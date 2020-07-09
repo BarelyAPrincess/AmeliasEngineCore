@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.amelia.support.IO;
+import io.amelia.extra.UtilityIO;
 
 public class ApacheConfiguration extends ApacheSection
 {
@@ -62,7 +62,7 @@ public class ApacheConfiguration extends ApacheSection
 			try ( BufferedReader br = new BufferedReader( new FileReader( file.toFile() ) ) )
 			{
 				appendRaw( br, file.toRealPath().toString() );
-				IO.closeQuietly( br );
+				UtilityIO.closeQuietly( br );
 			}
 			catch ( IOException e )
 			{

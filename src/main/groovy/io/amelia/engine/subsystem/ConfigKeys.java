@@ -2,7 +2,7 @@ package io.amelia.engine.subsystem;
 
 import io.amelia.data.TypeBase;
 import io.amelia.support.Encrypt;
-import io.amelia.support.Lists;
+import io.amelia.extra.UtilityLists;
 
 public class ConfigKeys
 {
@@ -16,7 +16,7 @@ public class ConfigKeys
 	public static final TypeBase EXT_TYPES = new TypeBase( CONFIGURATION_BASE, "extTypes" );
 	public static final TypeBase.TypeString DEFAULT_BINARY_CHARSET = new TypeBase.TypeString( CONFIGURATION_BASE, "defaultBinaryCharset", "ISO-8859-1" );
 	public static final TypeBase.TypeString DEFAULT_TEXT_CHARSET = new TypeBase.TypeString( CONFIGURATION_BASE, "defaultBinaryCharset", "UTF-8" );
-	public static final TypeBase.TypeStringList TLDS = new TypeBase.TypeStringList( CONFIGURATION_BASE, "tlds", Lists.newArrayList( tlds ) );
+	public static final TypeBase.TypeStringList TLDS = new TypeBase.TypeStringList( CONFIGURATION_BASE, "tlds", UtilityLists.newArrayList( tlds ) );
 	/**
 	 * Specifies a config key for disabling a application metrics.
 	 *

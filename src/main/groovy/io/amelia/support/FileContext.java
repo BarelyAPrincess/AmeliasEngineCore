@@ -21,8 +21,12 @@ import java.util.TreeMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import io.amelia.extra.UtilityMaps;
 import io.amelia.foundation.ConfigRegistry;
 import io.amelia.foundation.Kernel;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -44,16 +48,16 @@ public class FileContext
 	private String contentType = null;
 	private String ext = null;
 	private Path filePath = null;
-	@Maps.Key( "reqlogin" )
+	@UtilityMaps.Key( "reqlogin" )
 	private boolean reqLogin = false;
-	@Maps.Key( "reqperm" )
+	@UtilityMaps.Key( "reqperm" )
 	private String reqPerm = null;
-	@Maps.Key( "title" )
+	@UtilityMaps.Key( "title" )
 	private String title = null;
 
 	public Map<String, String> getAnnotations()
 	{
-		return Maps.objectToStringMap( this );
+		return UtilityMaps.objectToStringMap( this );
 	}
 
 	public Charset getCharset()
@@ -69,10 +73,10 @@ public class FileContext
 		return charset;
 	}
 
-	@Maps.Key( "charset" )
+	@UtilityMaps.Key( "charset" )
 	public String getCharsetName()
 	{
-		return Objs.ifPresentGet( getCharset(), Charset::name );
+		return UtilityObjects.ifPresentGet( getCharset(), Charset::name );
 	}
 
 	public byte[] getContentBytes()
@@ -87,7 +91,7 @@ public class FileContext
 		return new String( getContentBytes(), charset );
 	}
 
-	@Maps.Key( "contenttype" )
+	@UtilityMaps.Key( "contenttype" )
 	public String getContentType()
 	{
 		if ( contentType == null && filePath != null )
@@ -101,7 +105,7 @@ public class FileContext
 		return contentType;
 	}
 
-	@Maps.Key( "ext" )
+	@UtilityMaps.Key( "ext" )
 	public String getExt()
 	{
 		if ( ext == null )
@@ -114,10 +118,10 @@ public class FileContext
 		return filePath;
 	}
 
-	@Maps.Key( "file" )
+	@UtilityMaps.Key( "file" )
 	public String getFilePathRel( Path relTo )
 	{
-		return IO.relPath( filePath, relTo );
+		return UtilityIO.relPath( filePath, relTo );
 	}
 
 	public String getMetaValue( @Nonnull String key )
@@ -146,12 +150,12 @@ public class FileContext
 		else if ( key.equals( "ext" ) )
 			ext = value;
 		else if ( key.equals( "reqlogin" ) )
-			reqLogin = Objs.castToBoolean( value );
+			reqLogin = UtilityObjects.castToBoolean( value );
 		else if ( key.equals( "reqperm" ) )
 			reqPerm = value;
 		else if ( key.equals( "title" ) )
 			title = value;
-		else if ( Objs.isEmpty( value ) )
+		else if ( UtilityObjects.isEmpty( value ) )
 			metaValues.remove( key );
 		else
 			metaValues.put( key, value );
@@ -174,7 +178,7 @@ public class FileContext
 		try
 		{
 			in = Files.newInputStream( filePath );
-			ByteBuf inBuf = IO.readStreamToByteBuf( in );
+			ByteBuf inBuf = UtilityIO.readStreamToByteBuf( in );
 			ByteBuf outBuf = Unpooled.buffer();
 
 			int lastInx;
@@ -183,7 +187,7 @@ public class FileContext
 			for ( ; ; )
 			{
 				lastInx = inBuf.readerIndex();
-				String line = IO.readLine( inBuf );
+				String line = UtilityIO.readLine( inBuf );
 				if ( line == null )
 					break;
 				line = line.trim();
@@ -217,7 +221,7 @@ public class FileContext
 						if ( val.startsWith( "'" ) && val.endsWith( "'" ) )
 							val = val.substring( 1, val.length() - 1 );
 
-						Kernel.L.fine( "Reading annotation " + key + " with value " + val + " for file " + IO.relPath( filePath ) );
+						Kernel.L.fine( "Reading annotation " + key + " with value " + val + " for file " + UtilityIO.relPath( filePath ) );
 						putMetaValue( key, val );
 					}
 					catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
@@ -236,7 +240,7 @@ public class FileContext
 			}
 
 			// Write empty line returns so script exceptions still match up to their source file
-			outBuf.writeBytes( Strs.repeat( "\n", lineCount ).getBytes() );
+			outBuf.writeBytes( UtilityStrings.repeat( "\n", lineCount ).getBytes() );
 
 			// Write remaining data to output
 			outBuf.writeBytes( inBuf );
@@ -244,7 +248,7 @@ public class FileContext
 		}
 		finally
 		{
-			IO.closeQuietly( in );
+			UtilityIO.closeQuietly( in );
 		}
 	}
 

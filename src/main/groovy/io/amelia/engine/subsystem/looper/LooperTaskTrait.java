@@ -17,8 +17,8 @@ import io.amelia.engine.subsystem.looper.queue.DefaultQueue;
 import io.amelia.engine.subsystem.looper.queue.EntryAbstract;
 import io.amelia.engine.subsystem.looper.queue.EntryRunnable;
 import io.amelia.lang.ApplicationException;
-import io.amelia.support.Exceptions;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityExceptions;
+import io.amelia.extra.UtilityObjects;
 
 public interface LooperTaskTrait
 {
@@ -39,7 +39,7 @@ public interface LooperTaskTrait
 	 */
 	default TaskEntry postTask( LooperTask task )
 	{
-		EngineCore.L.info( "Task entry created!\n" + Exceptions.getStackTrace() );
+		EngineCore.L.info( "Task entry created!\n" + UtilityExceptions.getStackTrace() );
 
 		DefaultQueue queue = getQueue();
 		return queue.postEntry( new TaskEntry( queue, task, false ) );
@@ -47,7 +47,7 @@ public interface LooperTaskTrait
 
 	default TaskEntry postTaskAsync( LooperTask task )
 	{
-		EngineCore.L.info( "Task entry created!\n" + Exceptions.getStackTrace() );
+		EngineCore.L.info( "Task entry created!\n" + UtilityExceptions.getStackTrace() );
 
 		DefaultQueue queue = getQueue();
 		return queue.postEntry( new TaskEntry( queue, task, true ) );
@@ -210,8 +210,8 @@ public interface LooperTaskTrait
 	 */
 	default <E extends Exception> boolean postTaskUnsafe( @Nonnull LooperTask<E> task, @Nonnegative long timeout ) throws E
 	{
-		Objs.notNull( task );
-		Objs.notNegative( timeout );
+		UtilityObjects.notNull( task );
+		UtilityObjects.notNegative( timeout );
 
 		if ( isHeldByCurrentThread() )
 		{
@@ -298,7 +298,7 @@ public interface LooperTaskTrait
 		{
 			super( queue, async );
 
-			Objs.notNull( task );
+			UtilityObjects.notNull( task );
 
 			this.task = task;
 			if ( when <= 0 ) // Now

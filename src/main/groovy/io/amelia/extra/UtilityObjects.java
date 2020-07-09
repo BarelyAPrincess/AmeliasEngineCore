@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import com.google.common.base.Charsets;
 
@@ -41,8 +41,11 @@ import javax.annotation.Nullable;
 import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ReportingLevel;
 import io.amelia.lang.UncaughtException;
+import io.amelia.support.ConsumerWithException;
+import io.amelia.support.FunctionWithException;
+import io.amelia.support.SupplierWithException;
 
-public class Objs
+public class UtilityObjects
 {
 	public static <T> boolean allMatch( Comparator<T> comparator, T obj, T... objs )
 	{
@@ -86,7 +89,7 @@ public class Objs
 	{
 		notNull( list );
 
-		List<V> newList = Lists.copyEmpty( list );
+		List<V> newList = UtilityLists.copyEmpty( list );
 
 		for ( Object e : list )
 		{
@@ -100,7 +103,7 @@ public class Objs
 
 	public static <K, V> Map<K, V> castMap( @Nonnull Map<?, ?> map, @Nonnull Class<K> keyClz, @Nonnull Class<V> valClz )
 	{
-		Map<K, V> newMap = io.amelia.support.Maps.copyEmpty( map );
+		Map<K, V> newMap = UtilityMaps.copyEmpty( map );
 
 		for ( Map.Entry<?, ?> e : map.entrySet() )
 		{
@@ -449,7 +452,7 @@ public class Objs
 		if ( value instanceof Map )
 			return ( ( Map<?, ?> ) value ).entrySet().stream().map( e -> castToString( e.getKey() ) + "=\"" + castToString( e.getValue() ) + "\"" ).collect( Collectors.joining( "," ) );
 		if ( value instanceof List )
-			return ( ( List<?> ) value ).stream().map( io.amelia.support.Objs::castToString ).collect( Collectors.joining( "," ) );
+			return ( ( List<?> ) value ).stream().map( UtilityObjects::castToString ).collect( Collectors.joining( "," ) );
 		if ( value instanceof Charset )
 			return ( ( Charset ) value ).name();
 		if ( value instanceof byte[] )
@@ -1172,7 +1175,7 @@ public class Objs
 		return true;
 	}
 
-	private Objs()
+	private UtilityObjects()
 	{
 
 	}

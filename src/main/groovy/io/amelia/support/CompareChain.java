@@ -11,6 +11,8 @@ package io.amelia.support;
 
 import java.util.Comparator;
 
+import io.amelia.extra.UtilityArrs;
+
 public class CompareChain
 {
 	private int comparison = 0;
@@ -66,8 +68,8 @@ public class CompareChain
 
 		if ( left.getClass().isArray() )
 		{
-			Long[] la = io.amelia.support.Arrs.toLongArray( left );
-			Long[] ra = io.amelia.support.Arrs.toLongArray( right );
+			Long[] la = UtilityArrs.toLongArray( left );
+			Long[] ra = UtilityArrs.toLongArray( right );
 
 			if ( la.length > ra.length )
 				comparison = +1;

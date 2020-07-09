@@ -24,6 +24,7 @@ import io.amelia.data.parcel.ParcelCarrier;
 import io.amelia.data.parcel.ParcelReceiver;
 import io.amelia.foundation.Kernel;
 import io.amelia.looper.LooperRouter;
+import io.amelia.extra.UtilityObjects;
 
 public abstract class AsyncTask<Params, Progress, Result>
 {
@@ -200,7 +201,7 @@ public abstract class AsyncTask<Params, Progress, Result>
 	 */
 	public final io.amelia.support.AsyncTask<Params, Progress, Result> execute( @Nonnull Executor executor, Params... params )
 	{
-		io.amelia.support.Objs.notNull( executor );
+		UtilityObjects.notNull( executor );
 
 		if ( mStatus != Status.PENDING )
 		{

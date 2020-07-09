@@ -20,6 +20,6 @@ public class EntryPoint
 			return;
 		}
 
-
+		EngineCore.prepare();
 	}
 }

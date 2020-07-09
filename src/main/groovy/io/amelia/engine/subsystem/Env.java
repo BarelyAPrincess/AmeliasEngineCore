@@ -24,8 +24,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 import io.amelia.lang.UncaughtException;
-import io.amelia.support.IO;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
 import io.amelia.support.Pair;
 import io.amelia.support.VoluntaryBoolean;
 
@@ -66,7 +66,7 @@ public class Env
 
 	public VoluntaryBoolean getBoolean( String key )
 	{
-		return Objs.isTrue( getObject( key ) );
+		return UtilityObjects.isTrue( getObject( key ) );
 	}
 
 	public Optional<Object> getObject( String key )
@@ -86,7 +86,7 @@ public class Env
 
 	public Optional<String> getString( String key )
 	{
-		return getObject( key ).map( Objs::castToStringWithException );
+		return getObject( key ).map( UtilityObjects::castToStringWithException );
 	}
 
 	public Stream<String> getStrings()
@@ -106,7 +106,7 @@ public class Env
 
 	public boolean isValueSet( String key )
 	{
-		return env.containsKey( key ) && !Objs.isNull( env.get( key ) );
+		return env.containsKey( key ) && !UtilityObjects.isNull( env.get( key ) );
 	}
 
 	public Map<String, Object> map()
@@ -131,13 +131,13 @@ public class Env
 			Properties prop = new Properties();
 			if ( Files.isRegularFile( envFile ) )
 				prop.load( Files.newInputStream( envFile ) );
-			prop.setProperty( key, Objs.castToString( value ) );
+			prop.setProperty( key, UtilityObjects.castToString( value ) );
 			prop.store( Files.newOutputStream( envFile ), "" );
 		}
 		catch ( IOException e )
 		{
 			if ( e instanceof FileNotFoundException && e.getMessage().contains( "Permission denied" ) )
-				throw new UncaughtException( "We attempted to save the .env file and ran into a permissions issue for directory \"" + IO.relPath( envFile ) + "\"", e );
+				throw new UncaughtException( "We attempted to save the .env file and ran into a permissions issue for directory \"" + UtilityIO.relPath( envFile ) + "\"", e );
 			else
 				throw new UncaughtException( e );
 		}

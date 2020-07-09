@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -18,11 +18,11 @@ import javax.annotation.Nullable;
 
 import io.amelia.data.parcel.Parcel;
 
-public class Parcels
+public class UtilityParcels
 {
 	public static Optional<String> parseFormatString( @Nonnull Parcel data, @Nullable String format )
 	{
-		if ( io.amelia.support.Strs.isEmpty( format ) )
+		if ( UtilityStrings.isEmpty( format ) )
 			return Optional.empty();
 
 		// Add whitespace so when starting with $, it doesn't get missed.
@@ -43,7 +43,7 @@ public class Parcels
 		return Optional.of( format.substring( 1 ) );
 	}
 
-	public Parcels()
+	public UtilityParcels()
 	{
 		// Static Access
 	}

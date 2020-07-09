@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
+import io.amelia.extra.UtilityStrings;
+
 /**
  * Used to compare semantic versioning strings with support for optional release stage and/or build number.
  * e.g., 1.2.3-alpha.1+B001
@@ -51,11 +53,11 @@ public class Version implements Comparable<Version>
 			String buildStr = version.substring( version.indexOf( "+" ) + 1 );
 			if ( !buildStr.matches( "[BHbh]?[0-9]+" ) )
 				throw new IllegalArgumentException( "Illegal build format. Got \"" + buildStr + "\", expect \"B0123\" or \"H9956d8c\"" );
-			if ( Strs.startsWithIgnoreCase( buildStr, "B", "H" ) )
+			if ( UtilityStrings.startsWithIgnoreCase( buildStr, "B", "H" ) )
 				buildStr = buildStr.substring( 1 );
-			if ( Strs.startsWithIgnoreCase( buildStr, "B" ) )
+			if ( UtilityStrings.startsWithIgnoreCase( buildStr, "B" ) )
 				build = Integer.parseInt( buildStr );
-			if ( Strs.startsWithIgnoreCase( buildStr, "H" ) )
+			if ( UtilityStrings.startsWithIgnoreCase( buildStr, "H" ) )
 				releaseHash = buildStr;
 			version = version.substring( 0, version.indexOf( "+" ) );
 		}

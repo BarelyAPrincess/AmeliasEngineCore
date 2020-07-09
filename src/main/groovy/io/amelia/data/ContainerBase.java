@@ -30,7 +30,7 @@ import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ContainerException;
 import io.amelia.support.BiFunctionWithException;
 import io.amelia.support.ConsumerWithException;
-import io.amelia.support.Maps;
+import io.amelia.extra.UtilityMaps;
 import io.amelia.support.Namespace;
 import io.amelia.support.NodeStack;
 import io.amelia.support.Streams;
@@ -505,7 +505,7 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 
 	protected final int listenerAdd( ContainerListener.Container container )
 	{
-		return Maps.firstKeyAndPut( listeners, container );
+		return UtilityMaps.firstKeyAndPut( listeners, container );
 	}
 
 	public final int listenerChildAddAfter( ContainerListener.OnChildAdd<BaseClass> function, ContainerListener.Flags... flags )

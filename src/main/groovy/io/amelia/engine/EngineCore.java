@@ -53,6 +53,7 @@ public class EngineCore
 	static final int THREAD_POOL_SIZE_CORE = Math.max( 4, Math.min( CPU_COUNT - 1, 1 ) );
 	public static long startTime = System.currentTimeMillis();
 	private static EngineCoreApplication app;
+	private static boolean init;
 	private static Object runlevelTimingObject = new Object();
 	private static Object timingObject = new Object();
 
@@ -171,6 +172,32 @@ public class EngineCore
 
 			init = true;
 		}
+	}
+
+	public static void prepare()
+	{
+		requirePrimaryThread();
+		requireRunlevel( Runlevel.INITIALIZATION, "prepare() must be called at runlevel INITIALIZATION" );
+
+		L.info( "Loading deployment libraries from \"" + Libraries.LIBRARY_DIR + "\"" );
+		try
+		{
+			/* Load Deployment Libraries */
+			L.info( "Loading deployment libraries defined in \"dependencies.txt\"." );
+			String depends = IO.resourceToString( "dependencies.txt" );
+			if ( !Objs.isEmpty( depends ) ) // Will be null if the file does not exist
+				for ( String depend : depends.split( "\n" ) )
+					if ( !depend.startsWith( "#" ) )
+						Libraries.loadLibrary( new MavenReference( "builtin", depend ) );
+		}
+		catch ( IOException e )
+		{
+			throw new StartupException( "Failed to read the built-in dependencies file.", e );
+		}
+		L.info( EnumColor.AQUA + "Finished downloading deployment libraries." );
+
+		// Call to make sure the INITIALIZATION runlevel is acknowledged by the application.
+		onRunlevelChange();
 	}
 
 	public static void setRunlevel( @Nonnull Runlevel level )

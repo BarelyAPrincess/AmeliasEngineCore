@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import io.amelia.looper.DefaultLooper;
 import io.amelia.looper.Delays;
 import io.amelia.looper.LooperTaskTrait;
+import io.amelia.extra.UtilityIO;
 
 public abstract class FileWatcher
 {
@@ -35,7 +36,7 @@ public abstract class FileWatcher
 
 			if ( Files.exists( path ) )
 			{
-				long newLastModified = IO.getLastModified( path );
+				long newLastModified = UtilityIO.getLastModified( path );
 				changesDetected = newLastModified > lastModified;
 
 				if ( changesDetected )

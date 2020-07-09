@@ -33,7 +33,7 @@ import io.amelia.lang.ContainerException;
 import io.amelia.lang.ParcelableException;
 import io.amelia.support.BiFunctionWithException;
 import io.amelia.support.Namespace;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityObjects;
 import io.amelia.support.Pair;
 import io.amelia.support.Voluntary;
 import io.amelia.support.VoluntaryWithCause;
@@ -134,15 +134,15 @@ public abstract class ContainerWithValue<BaseClass extends ContainerWithValue<Ba
 					if ( obj.getClass().isAssignableFrom( field.getType() ) )
 						field.set( instance, obj );
 					else if ( String.class.isAssignableFrom( field.getType() ) )
-						field.set( instance, Objs.castToString( value ) );
+						field.set( instance, UtilityObjects.castToString( value ) );
 					else if ( Double.class.isAssignableFrom( field.getType() ) )
-						field.set( instance, Objs.castToDouble( value ) );
+						field.set( instance, UtilityObjects.castToDouble( value ) );
 					else if ( Integer.class.isAssignableFrom( field.getType() ) )
-						field.set( instance, Objs.castToInt( value ) );
+						field.set( instance, UtilityObjects.castToInt( value ) );
 					else if ( Long.class.isAssignableFrom( field.getType() ) )
-						field.set( instance, Objs.castToLong( value ) );
+						field.set( instance, UtilityObjects.castToLong( value ) );
 					else if ( Boolean.class.isAssignableFrom( field.getType() ) )
-						field.set( instance, Objs.castToBoolean( value ) );
+						field.set( instance, UtilityObjects.castToBoolean( value ) );
 					else
 						assigned = false;
 				}
@@ -217,7 +217,7 @@ public abstract class ContainerWithValue<BaseClass extends ContainerWithValue<Ba
 
 	public <LT extends ValueType> List<LT> getChildAsList( String key, Class<LT> type )
 	{
-		return childFind( key ).map( child -> child.getChildren().map( c -> Objs.castTo( c.value, type ) ).filter( Objects::nonNull ).collect( Collectors.toList() ) ).orElse( null );
+		return childFind( key ).map( child -> child.getChildren().map( c -> UtilityObjects.castTo( c.value, type ) ).filter( Objects::nonNull ).collect( Collectors.toList() ) ).orElse( null );
 	}
 
 	public <ExpectedValueType extends ValueType> List<ExpectedValueType> getChildAsList( String key )

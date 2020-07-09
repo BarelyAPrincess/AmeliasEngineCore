@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * Manipulates arrays typically using Java 8 Streams
  */
 @SuppressWarnings( "unchecked" )
-public class Arrs
+public class UtilityArrs
 {
 	public static <T> T[] append( @Nonnull T[] arr, T first )
 	{
@@ -198,7 +198,7 @@ public class Arrs
 
 	public static byte[] concat( @Nonnull byte[]... arrays )
 	{
-		Objs.notNegativeOrZero( arrays.length );
+		UtilityObjects.notNegativeOrZero( arrays.length );
 
 		int length = 0;
 		for ( byte[] array : arrays )
@@ -220,7 +220,7 @@ public class Arrs
 
 	public static <T> T[] concat( @Nonnull T[]... arr )
 	{
-		Objs.notNegativeOrZero( arr.length );
+		UtilityObjects.notNegativeOrZero( arr.length );
 		return Arrays.stream( arr ).flatMap( Arrays::stream ).toArray( size -> Arrays.copyOf( arr[0], size ) );
 	}
 
@@ -300,7 +300,7 @@ public class Arrs
 
 	public static String[] removeEmptyStrings( String[] nodes )
 	{
-		return Arrays.stream( nodes ).filter( Strs::isNotEmpty ).toArray( String[]::new );
+		return Arrays.stream( nodes ).filter( UtilityStrings::isNotEmpty ).toArray( String[]::new );
 	}
 
 	public static <T> T[] reverse( T[] values )
@@ -335,7 +335,7 @@ public class Arrs
 		int len = boxedArray.length;
 		char[] array = new char[len];
 		for ( int i = 0; i < len; i++ )
-			array[i] = ( Character ) Objs.notNull( boxedArray[i] );
+			array[i] = ( Character ) UtilityObjects.notNull( boxedArray[i] );
 		return array;
 	}
 
@@ -371,7 +371,7 @@ public class Arrs
 		{
 			try
 			{
-				return Arrays.stream( ( Object[] ) obj ).map( Objs::castToLongWithException ).toArray( Long[]::new );
+				return Arrays.stream( ( Object[] ) obj ).map( UtilityObjects::castToLongWithException ).toArray( Long[]::new );
 			}
 			catch ( ClassCastException e )
 			{
@@ -382,7 +382,7 @@ public class Arrs
 		return list.toArray( new Long[0] );
 	}
 
-	private Arrs()
+	private UtilityArrs()
 	{
 		// Static Access
 	}

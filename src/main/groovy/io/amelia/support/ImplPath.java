@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityStrings;
+
 /**
  * Provides default methods to make implementing Path a bit easier.
  *
@@ -41,7 +44,7 @@ public interface ImplPath<Self extends io.amelia.support.ImplPath> extends Path
 
 	default Self create( Path path )
 	{
-		return create( io.amelia.support.Strs.split( path.toString(), File.pathSeparator ).toArray( String[]::new ) );
+		return create( UtilityStrings.split( path.toString(), File.pathSeparator ).toArray( String[]::new ) );
 	}
 
 	/**
@@ -433,8 +436,8 @@ public interface ImplPath<Self extends io.amelia.support.ImplPath> extends Path
 			io.amelia.support.Namespace ns = io.amelia.support.Namespace.of( self.getNames() );
 			for ( int i = 0; i < self.getNameCount(); i++ )
 			{
-				if ( io.amelia.support.Namespace.of( io.amelia.support.IO.getNames( other ) ).startsWith( ns ) )
-					return create( io.amelia.support.Strs.repeat( "../", ns.getNodeCount() ) + other.subpath( ns.getNodeCount(), other.getNameCount() ) );
+				if ( io.amelia.support.Namespace.of( UtilityIO.getNames( other ) ).startsWith( ns ) )
+					return create( UtilityStrings.repeat( "../", ns.getNodeCount() ) + other.subpath( ns.getNodeCount(), other.getNameCount() ) );
 				ns = ns.pop();
 			}
 			return create( other );
@@ -473,7 +476,7 @@ public interface ImplPath<Self extends io.amelia.support.ImplPath> extends Path
 			other = other.subpath( 1, other.getNameCount() );
 			ns = ns.pop();
 		}
-		ns = ns.append( io.amelia.support.IO.getNames( other ) );
+		ns = ns.append( UtilityIO.getNames( other ) );
 		return create( ns.getNames() );
 	}
 
@@ -561,7 +564,7 @@ public interface ImplPath<Self extends io.amelia.support.ImplPath> extends Path
 	 */
 	default boolean startsWith( Path other )
 	{
-		return io.amelia.support.Namespace.of( getNames() ).startsWith( io.amelia.support.Namespace.of( io.amelia.support.IO.getNames( other ) ) );
+		return io.amelia.support.Namespace.of( getNames() ).startsWith( io.amelia.support.Namespace.of( UtilityIO.getNames( other ) ) );
 	}
 
 	/**

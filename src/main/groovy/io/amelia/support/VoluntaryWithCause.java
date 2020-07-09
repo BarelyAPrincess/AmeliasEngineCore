@@ -20,6 +20,8 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 
+import io.amelia.extra.UtilityObjects;
+
 /**
  * An expanded container object which may or may not contain a non-null value and/or exception, is similar to {@link Optional} but adds error handling.
  * If a value is present, {@code isPresent()} will return {@code true} and {@code get()} will return the value.
@@ -88,7 +90,7 @@ public final class VoluntaryWithCause<Type, Cause extends Exception> extends io.
 	 */
 	public io.amelia.support.VoluntaryWithCause<Type, Cause> filter( Predicate<? super Type> predicate )
 	{
-		io.amelia.support.Objs.notNull( predicate );
+		UtilityObjects.notNull( predicate );
 		if ( !isPresent() )
 			return this;
 		else
@@ -97,9 +99,9 @@ public final class VoluntaryWithCause<Type, Cause extends Exception> extends io.
 
 	public <U> io.amelia.support.VoluntaryWithCause<U, Cause> flatMapCompatible( @Nonnull Function<? super Type, Optional<U>> mapper )
 	{
-		io.amelia.support.Objs.notNull( mapper );
+		UtilityObjects.notNull( mapper );
 		if ( isPresent() )
-			return ofWithCause( io.amelia.support.Objs.notNull( mapper.apply( value ) ) );
+			return ofWithCause( UtilityObjects.notNull( mapper.apply( value ) ) );
 		else
 			return emptyWithCause();
 	}
@@ -125,9 +127,9 @@ public final class VoluntaryWithCause<Type, Cause extends Exception> extends io.
 	 */
 	public <U, C extends Exception> io.amelia.support.VoluntaryWithCause<U, C> flatMapWithCause( @Nonnull Function<? super Type, VoluntaryWithCause<U, C>> mapper )
 	{
-		io.amelia.support.Objs.notNull( mapper );
+		UtilityObjects.notNull( mapper );
 		if ( isPresent() )
-			return io.amelia.support.Objs.notNull( mapper.apply( value ) );
+			return UtilityObjects.notNull( mapper.apply( value ) );
 		else
 			return emptyWithCause();
 	}

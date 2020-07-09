@@ -19,6 +19,8 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.amelia.extra.UtilityObjects;
+
 public class DateAndTime
 {
 	/*
@@ -231,7 +233,7 @@ public class DateAndTime
 	 */
 	public static String formatDuration( String seconds )
 	{
-		return formatDuration( io.amelia.support.Objs.castToLong( seconds ) );
+		return formatDuration( UtilityObjects.castToLong( seconds ) );
 	}
 
 	private DateAndTime()

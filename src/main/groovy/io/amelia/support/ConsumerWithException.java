@@ -9,6 +9,8 @@
  */
 package io.amelia.support;
 
+import io.amelia.extra.UtilityObjects;
+
 @FunctionalInterface
 public interface ConsumerWithException<T, E extends Exception>
 {
@@ -33,7 +35,7 @@ public interface ConsumerWithException<T, E extends Exception>
 	 */
 	default io.amelia.support.ConsumerWithException<T, E> andThen( io.amelia.support.ConsumerWithException<? super T, E> after )
 	{
-		io.amelia.support.Objs.isNotNull( after );
+		UtilityObjects.isNotNull( after );
 		return ( T t ) -> {
 			accept( t );
 			after.accept( t );

@@ -17,6 +17,8 @@ import java.util.function.LongSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import io.amelia.extra.UtilityObjects;
+
 /**
  * A container object which may or may not contain a {@code long} value.
  * If a value is present, {@code isPresent()} will return {@code true} and
@@ -135,7 +137,7 @@ public final class VoluntaryLong
 
 	public io.amelia.support.VoluntaryLong filter( Predicate<Long> predicate )
 	{
-		Objs.notNull( predicate );
+		UtilityObjects.notNull( predicate );
 		if ( !isPresent() )
 			return this;
 		else
@@ -144,8 +146,8 @@ public final class VoluntaryLong
 
 	public io.amelia.support.VoluntaryLong flatMap( Function<Long, OptionalLong> function )
 	{
-		Objs.notNull( function );
-		return !this.isPresent() ? empty() : of( Objs.notNull( function.apply( value ) ) );
+		UtilityObjects.notNull( function );
+		return !this.isPresent() ? empty() : of( UtilityObjects.notNull( function.apply( value ) ) );
 	}
 
 	/**
@@ -203,7 +205,7 @@ public final class VoluntaryLong
 
 	public io.amelia.support.VoluntaryLong map( Function<Long, Long> function )
 	{
-		Objs.notNull( function );
+		UtilityObjects.notNull( function );
 		return !this.isPresent() ? empty() : of( function.apply( value ) );
 	}
 

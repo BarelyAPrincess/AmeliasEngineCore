@@ -22,7 +22,7 @@ import io.amelia.data.parcel.ParcelLoader;
 import io.amelia.lang.ConfigException;
 import io.amelia.support.Namespace;
 import io.amelia.support.NodeStack;
-import io.amelia.support.Objs;
+import io.amelia.extra.UtilityObjects;
 import io.amelia.support.Voluntary;
 
 public final class ConfigData extends ContainerWithValue<ConfigData, Object, ConfigException.Error> implements KeyValueTypesTrait<ConfigException.Error>
@@ -71,7 +71,7 @@ public final class ConfigData extends ContainerWithValue<ConfigData, Object, Con
 
 	public static ConfigData of( String namespace )
 	{
-		return of( Namespace.of( Objs.notNullOrDef( namespace, "" ) ) );
+		return of( Namespace.of( UtilityObjects.notNullOrDef( namespace, "" ) ) );
 	}
 
 	public static ConfigData of( NodeStack namespace )

@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -64,17 +64,18 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.xml.bind.DatatypeConverter;
 
-import io.amelia.foundation.Kernel;
-import io.amelia.injection.Libraries;
+import io.amelia.engine.subsystem.Subsystem;
 import io.amelia.lang.ReportingLevel;
 import io.amelia.lang.UncaughtException;
+import io.amelia.support.EnumColor;
+import io.amelia.support.Sys;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-public class IO
+public class UtilityIO
 {
 	public static final String PATH_SEPERATOR = File.separator;
-	public static final List<String> excutableExts = Lists.newArrayList( "sh", "py" );
+	public static final List<String> excutableExts = UtilityLists.newArrayList( "sh", "bash", "py" );
 	private static final char[] BYTE2CHAR = new char[256];
 	private static final String[] BYTE2HEX = new String[256];
 	private static final String[] BYTEPADDING = new String[16];
@@ -84,7 +85,6 @@ public class IO
 	private static final int EOF = -1;
 	private static final String[] HEXDUMP_ROWPREFIXES = new String[65536 >>> 4];
 	private static final String[] HEXPADDING = new String[16];
-	private static final Kernel.Logger L = Kernel.getLogger( io.amelia.support.IO.class );
 	private static final String NEWLINE = "\n";
 
 	static
@@ -373,7 +373,7 @@ public class IO
 			return;
 
 		if ( Files.isDirectory( path, LinkOption.NOFOLLOW_LINKS ) )
-			io.amelia.support.Streams.forEachWithException( Files.list( path ), io.amelia.support.IO::deleteIfExists );
+			io.amelia.support.Streams.forEachWithException( Files.list( path ), UtilityIO::deleteIfExists );
 
 		Files.delete( path );
 	}
@@ -385,7 +385,7 @@ public class IO
 
 	public static String dirname( @Nonnull Path path, int levels )
 	{
-		io.amelia.support.Objs.notPositive( levels );
+		UtilityObjects.notPositive( levels );
 
 		path = path.toAbsolutePath();
 
@@ -405,8 +405,8 @@ public class IO
 
 	public static String dirname( @Nonnull File path, int levels )
 	{
-		io.amelia.support.Objs.notNull( path );
-		io.amelia.support.Objs.notFalse( levels > 0 );
+		UtilityObjects.notNull( path );
+		UtilityObjects.notFalse( levels > 0 );
 
 		path = path.getAbsoluteFile();
 
@@ -500,7 +500,7 @@ public class IO
 			forceCreateDirectory( basePath );
 
 			if ( !Files.isRegularFile( jarPath ) || jarPath.getFileName().toString().toLowerCase().endsWith( ".jar" ) )
-				L.severe( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
+				Subsystem.L.severe( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
 
 			JarFile jar = new JarFile( jarPath.toFile() );
 
@@ -646,8 +646,8 @@ public class IO
 
 	public static boolean extractNatives( @Nonnull Map<String, List<String>> natives, @Nonnull Path libPath, @Nonnull Path basePath ) throws IOException
 	{
-		if ( !io.amelia.support.Objs.containsKeys( natives, Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ) ) )
-			L.warning( String.format( "%sWe were unable to locate any natives libraries that match architectures '%s' within plugin '%s'.", EnumColor.DARK_GRAY, io.amelia.support.Strs.join( OSInfo.NATIVE_SEARCH_PATHS ), libPath.toString() ) );
+		if ( !UtilityObjects.containsKeys( natives, Arrays.asList( OSInfo.NATIVE_SEARCH_PATHS ) ) )
+			L.warning( String.format( "%sWe were unable to locate any natives libraries that match architectures '%s' within plugin '%s'.", EnumColor.DARK_GRAY, UtilityStrings.join( OSInfo.NATIVE_SEARCH_PATHS ), libPath.toString() ) );
 
 		List<String> nativesExtracted = new ArrayList<>();
 		basePath = Paths.get( "natives" ).resolve( basePath );
@@ -732,14 +732,14 @@ public class IO
 
 	public static void extractResourceDirectory( String path, Path dest ) throws IOException
 	{
-		extractResourceDirectory( path, dest, io.amelia.support.IO.class );
+		extractResourceDirectory( path, dest, UtilityIO.class );
 	}
 
 	public static void extractResourceDirectory( @Nonnull String path, @Nonnull Path dest, @Nonnull Class<?> clazz ) throws IOException
 	{
-		io.amelia.support.Objs.notEmpty( path );
-		io.amelia.support.Objs.notNull( dest );
-		io.amelia.support.Objs.notNull( clazz );
+		UtilityObjects.notEmpty( path );
+		UtilityObjects.notNull( dest );
+		UtilityObjects.notNull( clazz );
 
 		if ( !Files.isDirectory( dest ) )
 			throw new IOException( "Specified destination '" + relPath( dest ) + "' is not a directory or does not exist." );
@@ -791,7 +791,7 @@ public class IO
 
 	public static void extractResourceZip( @Nonnull String res, @Nonnull Path dest ) throws IOException
 	{
-		extractResourceZip( res, dest, io.amelia.support.IO.class );
+		extractResourceZip( res, dest, UtilityIO.class );
 	}
 
 	public static void extractResourceZip( @Nonnull String res, @Nonnull Path dest, @Nonnull Class<?> clz ) throws IOException
@@ -813,8 +813,8 @@ public class IO
 
 	public static void extractZip( @Nonnull Path zipPath, @Nonnull Path dest, BiConsumer<String, Integer> progressConsumer ) throws IOException
 	{
-		io.amelia.support.Objs.notFalse( Files.isRegularFile( zipPath ) );
-		io.amelia.support.Objs.notFalse( Files.isDirectory( dest ) );
+		UtilityObjects.notFalse( Files.isRegularFile( zipPath ) );
+		UtilityObjects.notFalse( Files.isDirectory( dest ) );
 
 		ZipFile zip = new ZipFile( zipPath.toFile() );
 		int count = 0;
@@ -839,7 +839,7 @@ public class IO
 					// Temporary workaround for file execution based on file extension.
 					String ext = getFileExtension( entry.getName() );
 					if ( ext != null && Sys.isUnixLikeOS() && excutableExts.contains( ext.toLowerCase() ) )
-						Files.setPosixFilePermissions( savePath, Lists.newHashSet( PosixFilePermission.OWNER_EXECUTE ) );
+						Files.setPosixFilePermissions( savePath, UtilityLists.newHashSet( PosixFilePermission.OWNER_EXECUTE ) );
 
 					// TODO Report bytes copied
 					if ( progressConsumer != null )
@@ -855,7 +855,7 @@ public class IO
 
 	public static void fileExists( File file )
 	{
-		io.amelia.support.Objs.notFalse( file.exists(), String.format( "%s does not exist!", file.getAbsolutePath() ) );
+		UtilityObjects.notFalse( file.exists(), String.format( "%s does not exist!", file.getAbsolutePath() ) );
 	}
 
 	public static void forceCreateDirectory( @Nonnull Path path ) throws IOException
@@ -881,7 +881,7 @@ public class IO
 	@Nullable
 	public static String getFileExtension( @Nonnull String fileName )
 	{
-		return io.amelia.support.Objs.ifPresentGet( io.amelia.support.Strs.regexCapture( fileName, ".*\\.(.*)$" ), String::toLowerCase );
+		return UtilityObjects.ifPresentGet( UtilityStrings.regexCapture( fileName, ".*\\.(.*)$" ), String::toLowerCase );
 	}
 
 	@Nullable
@@ -932,7 +932,7 @@ public class IO
 
 	public static String getLocalName( @Nonnull Path path )
 	{
-		return io.amelia.support.Strs.regexCapture( path.getFileName().toString(), "^(.*)\\.[a-zA-Z0-9]+$" );
+		return UtilityStrings.regexCapture( path.getFileName().toString(), "^(.*)\\.[a-zA-Z0-9]+$" );
 	}
 
 	public static String getLocalName( @Nonnull File path )
@@ -1105,8 +1105,8 @@ public class IO
 			if ( highlightIndex < 0 )
 				highlightIndex = 16 + highlightIndex;
 
-			dump.append( NEWLINE ).append( "|        |" ).append( io.amelia.support.Strs.repeat( "   ", highlightIndex ) ).append( " $$" ).append( io.amelia.support.Strs.repeat( "   ", 15 - highlightIndex ) );
-			dump.append( " |" ).append( io.amelia.support.Strs.repeat( " ", highlightIndex ) ).append( "$" ).append( io.amelia.support.Strs.repeat( " ", 15 - highlightIndex ) ).append( "|" );
+			dump.append( NEWLINE ).append( "|        |" ).append( UtilityStrings.repeat( "   ", highlightIndex ) ).append( " $$" ).append( UtilityStrings.repeat( "   ", 15 - highlightIndex ) );
+			dump.append( " |" ).append( UtilityStrings.repeat( " ", highlightIndex ) ).append( "$" ).append( UtilityStrings.repeat( " ", 15 - highlightIndex ) ).append( "|" );
 		}
 
 		// Dump the rows which have 16 bytes.
@@ -1167,17 +1167,17 @@ public class IO
 
 	public static void isDirectory( Path directory )
 	{
-		io.amelia.support.Objs.notFalse( Files.isDirectory( directory ), String.format( "%s is not a directory!", relPath( directory ) ) );
+		UtilityObjects.notFalse( Files.isDirectory( directory ), String.format( "%s is not a directory!", relPath( directory ) ) );
 	}
 
 	public static void isDirectory( File directory )
 	{
-		io.amelia.support.Objs.notFalse( directory.isDirectory(), String.format( "%s is not a directory!", directory.getAbsolutePath() ) );
+		UtilityObjects.notFalse( directory.isDirectory(), String.format( "%s is not a directory!", directory.getAbsolutePath() ) );
 	}
 
 	public static boolean isDirectoryEmpty( File directory )
 	{
-		io.amelia.support.Objs.notNull( directory );
+		UtilityObjects.notNull( directory );
 		if ( directory.isDirectory() )
 		{
 			String[] lst = directory.list();
@@ -1188,7 +1188,7 @@ public class IO
 
 	public static String joinPath( @Nonnull String... paths )
 	{
-		return Arrays.stream( paths ).filter( n -> !io.amelia.support.Objs.isEmpty( n ) ).map( n -> io.amelia.support.Strs.trimAll( n, '/' ) ).collect( Collectors.joining( PATH_SEPERATOR ) );
+		return Arrays.stream( paths ).filter( n -> !UtilityObjects.isEmpty( n ) ).map( n -> UtilityStrings.trimAll( n, '/' ) ).collect( Collectors.joining( PATH_SEPERATOR ) );
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -1263,7 +1263,7 @@ public class IO
 
 	public static void putResource( String resource, Path path ) throws IOException
 	{
-		putResource( io.amelia.support.IO.class, resource, path );
+		putResource( UtilityIO.class, resource, path );
 	}
 
 	public static byte[] readFileToBytes( @Nonnull File file ) throws IOException
@@ -1472,21 +1472,21 @@ public class IO
 
 	public static Stream<String> readStreamToStream( @Nonnull InputStream is, @Nullable String ignorePrefix )
 	{
-		io.amelia.support.Objs.notNull( is );
+		UtilityObjects.notNull( is );
 
 		return new BufferedReader( new InputStreamReader( is ) ).lines().filter( s -> ignorePrefix == null || !s.toLowerCase().startsWith( ignorePrefix.toLowerCase() ) );
 	}
 
 	public static Stream<String> readStreamToStream( @Nonnull InputStream is ) throws FileNotFoundException
 	{
-		io.amelia.support.Objs.notNull( is );
+		UtilityObjects.notNull( is );
 
 		return new BufferedReader( new InputStreamReader( is ) ).lines();
 	}
 
 	public static String readStreamToString( @Nonnull InputStream inputStream ) throws IOException
 	{
-		return io.amelia.support.Strs.encodeDefault( readStreamToByteArray( inputStream ).toByteArray() );
+		return UtilityStrings.encodeDefault( readStreamToByteArray( inputStream ).toByteArray() );
 	}
 
 	public static List<File> recursiveFiles( @Nonnull final File dir )
@@ -1567,7 +1567,7 @@ public class IO
 	@Nullable
 	public static String relPath( @Nullable String file )
 	{
-		return relPath( file, Kernel.getPath().toString() );
+		return relPath( file, Subsystem.FIOS.getPath().toString() );
 	}
 
 	@Nullable
@@ -1597,7 +1597,7 @@ public class IO
 
 	public static String resourceToString( String resource ) throws IOException
 	{
-		return resourceToString( resource, io.amelia.support.IO.class );
+		return resourceToString( resource, UtilityIO.class );
 	}
 
 	public static String resourceToString( String resource, Class<?> clz ) throws IOException
@@ -1614,21 +1614,21 @@ public class IO
 	public static boolean setDirectoryAccess( File file )
 	{
 		if ( file.exists() && file.isDirectory() && file.canRead() && file.canWrite() )
-			L.finest( "This application has read and write access to directory \"" + relPath( file ) + "\"!" );
+			Subsystem.L.finest( "This application has read and write access to directory \"" + relPath( file ) + "\"!" );
 		else
 			try
 			{
 				if ( file.exists() && file.isFile() )
-					io.amelia.support.Objs.notFalse( file.delete(), "failed to delete directory!" );
-				io.amelia.support.Objs.notFalse( file.mkdirs(), "failed to create directory!" );
-				io.amelia.support.Objs.notFalse( file.setWritable( true ), "failed to set directory writable!" );
-				io.amelia.support.Objs.notFalse( file.setReadable( true ), "failed to set directory readable!" );
+					UtilityObjects.notFalse( file.delete(), "failed to delete directory!" );
+				UtilityObjects.notFalse( file.mkdirs(), "failed to create directory!" );
+				UtilityObjects.notFalse( file.setWritable( true ), "failed to set directory writable!" );
+				UtilityObjects.notFalse( file.setReadable( true ), "failed to set directory readable!" );
 
-				L.fine( "Setting read and write access for directory \"" + relPath( file ) + "\" was successful!" );
+				Subsystem.L.fine( "Setting read and write access for directory \"" + relPath( file ) + "\" was successful!" );
 			}
 			catch ( IllegalArgumentException e )
 			{
-				L.severe( "Exception encountered while handling access to path '" + relPath( file ) + "' with message '" + e.getMessage() + "'" );
+				Subsystem.L.severe( "Exception encountered while handling access to path '" + relPath( file ) + "' with message '" + e.getMessage() + "'" );
 				return false;
 			}
 		return true;
@@ -1684,7 +1684,7 @@ public class IO
 		List<String> nodes = new ArrayList<>();
 		for ( int i = 0; i < path.getNameCount(); i++ )
 			nodes.add( path.getName( i ).toString() );
-		return io.amelia.support.Strs.join( nodes, separator );
+		return UtilityStrings.join( nodes, separator );
 	}
 
 	public static void writeStringToFile( String data, File file ) throws IOException
@@ -1708,7 +1708,7 @@ public class IO
 
 	public static void writeStringToOutputStream( @Nonnull String content, @Nonnull OutputStream output ) throws IOException
 	{
-		output.write( io.amelia.support.Strs.decodeDefault( content ) );
+		output.write( UtilityStrings.decodeDefault( content ) );
 	}
 
 	public static void writeStringToPath( String data, Path path ) throws IOException
@@ -1797,7 +1797,7 @@ public class IO
 		}
 	}
 
-	private IO()
+	private UtilityIO()
 	{
 		// Static Access
 	}
@@ -1823,13 +1823,13 @@ public class IO
 		void read()
 		{
 			String prop = System.getProperty( "java.library.path" );
-			if ( !io.amelia.support.Objs.isNull( prop ) )
+			if ( !UtilityObjects.isNull( prop ) )
 				libPath.addAll( Arrays.asList( prop.split( ":" ) ) );
 		}
 
 		void set()
 		{
-			System.setProperty( "java.library.path", io.amelia.support.Strs.join( libPath, ":" ) );
+			System.setProperty( "java.library.path", UtilityStrings.join( libPath, ":" ) );
 		}
 	}
 
@@ -2149,8 +2149,8 @@ public class IO
 		@Override
 		public int compare( Path leftPath, Path rightPath )
 		{
-			long left = io.amelia.support.Objs.getOrDefault( () -> getCreation( leftPath ), 0L );
-			long right = io.amelia.support.Objs.getOrDefault( () -> getCreation( rightPath ), 0L );
+			long left = UtilityObjects.getOrDefault( () -> getCreation( leftPath ), 0L );
+			long right = UtilityObjects.getOrDefault( () -> getCreation( rightPath ), 0L );
 
 			return descending ? Long.compare( left, right ) : Long.compare( right, left );
 		}
@@ -2173,8 +2173,8 @@ public class IO
 		@Override
 		public int compare( Path leftPath, Path rightPath )
 		{
-			long left = io.amelia.support.Objs.getOrDefault( () -> getLastModified( leftPath ), 0L );
-			long right = io.amelia.support.Objs.getOrDefault( () -> getLastModified( rightPath ), 0L );
+			long left = UtilityObjects.getOrDefault( () -> getLastModified( leftPath ), 0L );
+			long right = UtilityObjects.getOrDefault( () -> getLastModified( rightPath ), 0L );
 
 			return descending ? Long.compare( left, right ) : Long.compare( right, left );
 		}
