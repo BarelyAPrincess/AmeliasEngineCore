@@ -9,7 +9,7 @@
  */
 package io.amelia.engine.subsystem.looper;
 
-import io.amelia.engine.EngineCore;
+import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.engine.subsystem.looper.queue.AbstractQueue;
 import io.amelia.engine.subsystem.looper.queue.DefaultQueue;
 import io.amelia.engine.subsystem.looper.queue.EntryAbstract;

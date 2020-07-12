@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.support;
+package io.amelia.extra;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import io.amelia.extra.UtilityStrings;
 /**
  * Provides basic encryption and randomizing functions
  */
-public class Encrypt
+public class UtilityEncrypt
 {
 	/**
 	 * The MD2 message digest algorithm defined in RFC 1319.
@@ -63,44 +63,44 @@ public class Encrypt
 	 */
 	public static final String SHA_512 = "SHA-512";
 	private static final Pattern UUID_PATTERN = Pattern.compile( "/^\\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\u200C\u200B\\}?$/" );
-	private static final char[] allowedCharMap;
+	private static final char[] allowedCharacters;
 	private static final Random random = new Random();
-	private static final char[] randomCharMap;
+	private static final char[] randomCharacters;
 
 	static
 	{
-		Set<Character> newRandomCharMap = new HashSet<>();
+		Set<Character> newRandomCharacters = new HashSet<>();
 
 		for ( int i = 33; i < 48; i++ )
-			newRandomCharMap.add( ( char ) i );
+			newRandomCharacters.add( ( char ) i );
 
 		for ( int i = 58; i < 65; i++ )
-			newRandomCharMap.add( ( char ) i );
+			newRandomCharacters.add( ( char ) i );
 
 		for ( int i = 91; i < 97; i++ )
-			newRandomCharMap.add( ( char ) i );
+			newRandomCharacters.add( ( char ) i );
 
 		for ( int i = 123; i < 128; i++ )
-			newRandomCharMap.add( ( char ) i );
+			newRandomCharacters.add( ( char ) i );
 
-		newRandomCharMap.addAll( new HashSet<>( Arrays.asList( new Character[] {128, 131, 134, 135, 138, 140, 142, 156, 158, 159, 161, 162, 163, 165, 167, 176, 181, 191} ) ) );
+		newRandomCharacters.addAll( new HashSet<>( Arrays.asList( new Character[] {128, 131, 134, 135, 138, 140, 142, 156, 158, 159, 161, 162, 163, 165, 167, 176, 181, 191} ) ) );
 
 		for ( int i = 192; i < 256; i++ )
-			newRandomCharMap.add( ( char ) i );
+			newRandomCharacters.add( ( char ) i );
 
-		randomCharMap = UtilityArrs.toCharArray( newRandomCharMap );
+		randomCharacters = UtilityArrs.toCharArray( newRandomCharacters );
 
-		Set<Character> newAllowedCharMap = new HashSet<>();
+		Set<Character> newAllowedCharacters = new HashSet<>();
 
 		for ( int i = 33; i < 127; i++ )
-			newAllowedCharMap.add( ( char ) i );
+			newAllowedCharacters.add( ( char ) i );
 
-		newAllowedCharMap.addAll( new HashSet<>( Arrays.asList( new Character[] {128, 131, 134, 135, 138, 140, 142, 156, 158, 159, 161, 162, 163, 165, 167, 176, 181, 191} ) ) );
+		newAllowedCharacters.addAll( new HashSet<>( Arrays.asList( new Character[] {128, 131, 134, 135, 138, 140, 142, 156, 158, 159, 161, 162, 163, 165, 167, 176, 181, 191} ) ) );
 
 		for ( int i = 192; i < 256; i++ )
-			newAllowedCharMap.add( ( char ) i );
+			newAllowedCharacters.add( ( char ) i );
 
-		allowedCharMap = UtilityArrs.toCharArray( newAllowedCharMap );
+		allowedCharacters = UtilityArrs.toCharArray( newAllowedCharacters );
 	}
 
 	public static byte[] base64Decode( String str )
@@ -287,7 +287,7 @@ public class Encrypt
 
 	public static char randomize( Random random )
 	{
-		return allowedCharMap[random.nextInt( allowedCharMap.length )];
+		return allowedCharacters[random.nextInt( allowedCharacters.length )];
 	}
 
 	public static char randomize( Random random, char chr )
@@ -301,7 +301,7 @@ public class Encrypt
 		if ( chr > 47 && chr < 58 ) // Numeric
 			return randomize( random, 48, 57 );
 
-		return randomCharMap[random.nextInt( randomCharMap.length )];
+		return randomCharacters[random.nextInt( randomCharacters.length )];
 	}
 
 	public static String randomize( Random rando, int length )
@@ -425,7 +425,7 @@ public class Encrypt
 		return UUID_PATTERN.matcher( uuid ).matches();
 	}
 
-	private Encrypt()
+	private UtilityEncrypt()
 	{
 
 	}

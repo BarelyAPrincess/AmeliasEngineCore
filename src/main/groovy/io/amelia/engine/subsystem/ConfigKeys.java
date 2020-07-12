@@ -1,7 +1,7 @@
 package io.amelia.engine.subsystem;
 
 import io.amelia.data.TypeBase;
-import io.amelia.support.Encrypt;
+import io.amelia.extra.UtilityEncrypt;
 import io.amelia.extra.UtilityLists;
 
 public class ConfigKeys
@@ -27,8 +27,8 @@ public class ConfigKeys
 	 */
 	public static final TypeBase.TypeBoolean DISABLE_METRICS = new TypeBase.TypeBoolean( APPLICATION_BASE, "disableMetrics", false );
 
-	public static final TypeBase.TypeString UUID_NULL = new TypeBase.TypeString( APPLICATION_BASE, "entityUuidNull", Encrypt.uuid() );
-	public static final TypeBase.TypeString UUID_ROOT = new TypeBase.TypeString( APPLICATION_BASE, "entityUuidRoot", Encrypt.uuid() );
+	public static final TypeBase.TypeString UUID_NULL = new TypeBase.TypeString( APPLICATION_BASE, "entityUuidNull", UtilityEncrypt.uuid() );
+	public static final TypeBase.TypeString UUID_ROOT = new TypeBase.TypeString( APPLICATION_BASE, "entityUuidRoot", UtilityEncrypt.uuid() );
 
 	private ConfigKeys()
 	{

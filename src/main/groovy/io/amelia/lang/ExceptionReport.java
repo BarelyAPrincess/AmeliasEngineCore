@@ -81,26 +81,26 @@ public final class ExceptionReport
 	public ExceptionReport addException( ReportingLevel level, String msg, Throwable throwable )
 	{
 		if ( throwable != null )
-			if ( throwable instanceof UncaughtException )
+			if ( throwable instanceof ApplicationException.Uncaught )
 			{
-				( ( UncaughtException ) throwable ).setReportingLevel( level );
+				( ( ApplicationException.Uncaught ) throwable ).setReportingLevel( level );
 				exceptionContexts.add( ( ExceptionContext ) throwable );
 			}
 			else
-				exceptionContexts.add( new UncaughtException( level, msg, throwable ) );
+				exceptionContexts.add( new ApplicationException.Uncaught( level, msg, throwable ) );
 		return this;
 	}
 
 	public ExceptionReport addException( ReportingLevel level, Throwable throwable )
 	{
 		if ( throwable != null )
-			if ( throwable instanceof UncaughtException )
+			if ( throwable instanceof ApplicationException.Uncaught )
 			{
-				( ( UncaughtException ) throwable ).setReportingLevel( level );
+				( ( ApplicationException.Uncaught ) throwable ).setReportingLevel( level );
 				exceptionContexts.add( ( ExceptionContext ) throwable );
 			}
 			else
-				exceptionContexts.add( new UncaughtException( level, throwable ) );
+				exceptionContexts.add( new ApplicationException.Uncaught( level, throwable ) );
 		return this;
 	}
 
@@ -354,7 +354,7 @@ public final class ExceptionReport
 			if ( throwable instanceof Exception )
 				throw ( E ) throwable;
 			else
-				throw new UncaughtException( throwable );
+				throw new ApplicationException.Uncaught( throwable );
 		}
 		else if ( exceptionContexts.size() > 1 )
 			throw ( E ) new MultipleException( exceptionContexts );

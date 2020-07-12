@@ -7,18 +7,18 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.engine;
+package io.amelia.engine.subsystem;
 
 import io.amelia.data.parcel.ParcelReceiver;
-import io.amelia.engine.subsystem.looper.MainLooper;
-import io.amelia.engine.subsystem.looper.queue.EntryAbstract;
 import io.amelia.lang.ApplicationException;
+import io.amelia.looper.MainLooper;
+import io.amelia.looper.queue.EntryAbstract;
 
-public class EngineCoreLooper extends MainLooper
+public class EngineLooper extends MainLooper
 {
 	private final ParcelReceiver parcelReceiver;
 
-	public EngineCoreLooper( ParcelReceiver parcelReceiver )
+	public EngineLooper( ParcelReceiver parcelReceiver )
 	{
 		this.parcelReceiver = parcelReceiver;
 	}
@@ -31,13 +31,13 @@ public class EngineCoreLooper extends MainLooper
 
 	public boolean isDisposed()
 	{
-		return EngineCore.isRunlevel( Runlevel.DISPOSED );
+		return Foundation.isRunlevel( Runlevel.DISPOSED );
 	}
 
 	@Override
 	public boolean isPermitted( EntryAbstract entry )
 	{
-		if ( EngineCore.getRunlevel().intValue() < Runlevel.MAINLOOP.intValue() && entry instanceof TaskEntry )
+		if ( Foundation.getRunlevel().intValue() < Runlevel.MAINLOOP.intValue() && entry instanceof TaskEntry )
 			throw new ApplicationException.Runtime( entry.getClass().getSimpleName() + " can only be posted to the FoundationLooper at runlevel MAINLOOP and above. Current runlevel is " + Foundation.getRunlevel() );
 
 		// TODO Check known built-in AbstractEntry sub-classes.
@@ -46,7 +46,7 @@ public class EngineCoreLooper extends MainLooper
 
 	protected boolean canQuit()
 	{
-		return EngineCore.getRunlevel().intValue() <= 100;
+		return Foundation.getRunlevel().intValue() <= 100;
 	}
 
 	@Override
@@ -70,6 +70,6 @@ public class EngineCoreLooper extends MainLooper
 		super.signalInfallibleStartup();
 
 		// As soon as the looper gets started, we set the runlevel appropriately.
-		EngineCore.setRunlevel( Runlevel.MAINLOOP );
+		Foundation.setRunlevel( Runlevel.MAINLOOP );
 	}
 }

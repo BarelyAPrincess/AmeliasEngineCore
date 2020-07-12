@@ -7,7 +7,7 @@
  * <p>
  * All Rights Reserved.
  */
-package io.amelia.engine.subsystem;
+package io.amelia.support;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,11 +23,9 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.lang.UncaughtException;
+import io.amelia.lang.ApplicationException;
 import io.amelia.extra.UtilityIO;
 import io.amelia.extra.UtilityObjects;
-import io.amelia.support.Pair;
-import io.amelia.support.VoluntaryBoolean;
 
 public class Env
 {
@@ -137,9 +135,9 @@ public class Env
 		catch ( IOException e )
 		{
 			if ( e instanceof FileNotFoundException && e.getMessage().contains( "Permission denied" ) )
-				throw new UncaughtException( "We attempted to save the .env file and ran into a permissions issue for directory \"" + UtilityIO.relPath( envFile ) + "\"", e );
+				throw new ApplicationException.Uncaught( "We attempted to save the .env file and ran into a permissions issue for directory \"" + UtilityIO.relPath( envFile ) + "\"", e );
 			else
-				throw new UncaughtException( e );
+				throw new ApplicationException.Uncaught( e );
 		}
 	}
 }

@@ -11,7 +11,7 @@ package io.amelia.engine.subsystem.looper.queue;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.engine.EngineCore;
+import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.lang.ApplicationException;
 
 public abstract class EntryRunnable extends EntryAbstract implements Runnable

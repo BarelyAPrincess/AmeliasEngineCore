@@ -15,7 +15,7 @@ import javax.annotation.Nonnull;
 import io.amelia.data.parcel.EntryParcel;
 import io.amelia.data.parcel.ParcelCarrier;
 import io.amelia.data.parcel.ParcelReceiver;
-import io.amelia.engine.EngineCore;
+import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.engine.subsystem.looper.queue.DefaultQueue;
 import io.amelia.engine.subsystem.looper.queue.EntryRunnable;
 

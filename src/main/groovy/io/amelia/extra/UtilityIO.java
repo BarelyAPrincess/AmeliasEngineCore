@@ -39,6 +39,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -64,9 +65,11 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.xml.bind.DatatypeConverter;
 
-import io.amelia.engine.subsystem.Subsystem;
+import io.amelia.engine.subsystem.StorageEngine;
+import io.amelia.engine.subsystem.injection.Libraries;
+import io.amelia.engine.subsystem.log.L;
+import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ReportingLevel;
-import io.amelia.lang.UncaughtException;
 import io.amelia.support.EnumColor;
 import io.amelia.support.Sys;
 import io.netty.buffer.ByteBuf;
@@ -215,7 +218,7 @@ public class UtilityIO
 		if ( expectedMd5 == null || file == null || !file.exists() )
 			return false;
 
-		String md5 = io.amelia.support.Encrypt.md5Hex( new FileInputStream( file ) );
+		String md5 = UtilityEncrypt.md5Hex( new FileInputStream( file ) );
 		return md5 != null && md5.equals( expectedMd5 );
 	}
 
@@ -500,7 +503,7 @@ public class UtilityIO
 			forceCreateDirectory( basePath );
 
 			if ( !Files.isRegularFile( jarPath ) || jarPath.getFileName().toString().toLowerCase().endsWith( ".jar" ) )
-				Subsystem.L.severe( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
+				L.severe( "There was a problem with the provided jar file, it was either null, not existent or did not end with jar." );
 
 			JarFile jar = new JarFile( jarPath.toFile() );
 
@@ -796,7 +799,7 @@ public class UtilityIO
 
 	public static void extractResourceZip( @Nonnull String res, @Nonnull Path dest, @Nonnull Class<?> clz ) throws IOException
 	{
-		Path cache = Kernel.getPath( Kernel.PATH_CACHE );
+		Path cache = StorageEngine.getPath( StorageEngine.PATH_CACHE );
 		forceCreateDirectory( cache );
 
 		Path temp = Paths.get( "temp.zip" ).resolve( cache );
@@ -1567,7 +1570,7 @@ public class UtilityIO
 	@Nullable
 	public static String relPath( @Nullable String file )
 	{
-		return relPath( file, Subsystem.FIOS.getPath().toString() );
+		return relPath( file, StorageEngine.getPath().toString() );
 	}
 
 	@Nullable
@@ -1614,7 +1617,7 @@ public class UtilityIO
 	public static boolean setDirectoryAccess( File file )
 	{
 		if ( file.exists() && file.isDirectory() && file.canRead() && file.canWrite() )
-			Subsystem.L.finest( "This application has read and write access to directory \"" + relPath( file ) + "\"!" );
+			L.finest( "This application has read and write access to directory \"" + relPath( file ) + "\"!" );
 		else
 			try
 			{
@@ -1624,11 +1627,11 @@ public class UtilityIO
 				UtilityObjects.notFalse( file.setWritable( true ), "failed to set directory writable!" );
 				UtilityObjects.notFalse( file.setReadable( true ), "failed to set directory readable!" );
 
-				Subsystem.L.fine( "Setting read and write access for directory \"" + relPath( file ) + "\" was successful!" );
+				L.fine( "Setting read and write access for directory \"" + relPath( file ) + "\" was successful!" );
 			}
 			catch ( IllegalArgumentException e )
 			{
-				Subsystem.L.severe( "Exception encountered while handling access to path '" + relPath( file ) + "' with message '" + e.getMessage() + "'" );
+				L.severe( "Exception encountered while handling access to path '" + relPath( file ) + "' with message '" + e.getMessage() + "'" );
 				return false;
 			}
 		return true;
@@ -1638,7 +1641,99 @@ public class UtilityIO
 	public static void setDirectoryAccessWithException( File file )
 	{
 		if ( !setDirectoryAccess( file ) )
-			throw new UncaughtException( ReportingLevel.E_ERROR, "Experienced a problem setting read and write access to directory \"" + relPath( file ) + "\"!" );
+			throw new ApplicationException.Uncaught( ReportingLevel.E_ERROR, "Experienced a problem setting read and write access to directory \"" + relPath( file ) + "\"!" );
+	}
+
+	public static PermissionReference getPermissionReference( Path path ) throws IOException
+	{
+		return new PermissionReference( path );
+	}
+
+	public static class PermissionReference
+	{
+		Set<PosixFilePermission> current;
+		Path path;
+
+		public PermissionReference( Path path ) throws IOException
+		{
+			current = Files.getPosixFilePermissions( path );
+			this.path = path;
+		}
+
+		public void setOwner( int posixInt )
+		{
+			if ( posixInt > 7 || posixInt < 0 )
+				throw new IllegalArgumentException( "POSIX value can't be less than zero or more than 7." );
+			if ( posixInt % 4 == 0 )
+			{
+
+			}
+		}
+	}
+
+	public static void setPermissionsSymbolic( Path path, String perms ) throws IOException
+	{
+		for ( String perm : perms.split( " " ) )
+		{
+			Set<PosixFilePermission> currentPerms = Files.getPosixFilePermissions( path );
+			Set<PosixFilePermission> newPerms = new HashSet<>();
+			boolean user = false;
+			boolean group = false;
+			boolean other = false;
+			char operand = 0x00;
+			int step = 0;
+
+			for ( char c : perm.toCharArray() )
+			{
+				if ( step == 0 )
+					switch ( c )
+					{
+						case 'a':
+							user = true;
+							group = true;
+							other = true;
+							break;
+						case 'o':
+							other = true;
+							break;
+						case 'g':
+							group = true;
+							break;
+						case 'u':
+							user = true;
+							break;
+						case '+':
+						case '-':
+						case '=':
+							step++;
+							break;
+						default:
+							throw new IllegalArgumentException( String.format( "Invalid symbolic mode, e.g., [ugoa...][[-+=][perms...]...]. {user='%s', group='%s', other='%s', operand='%s', step='%s'}", user, group, other, operand, step ) );
+					}
+				if ( step == 1 )
+				{
+					if ( c == '+' || c == '-' || c == '=' )
+						operand = c;
+					else
+						throw new IllegalArgumentException( String.format( "Invalid symbolic mode, e.g., [ugoa...][[-+=][perms...]...]. {user='%s', group='%s', other='%s', operand='%s', step='%s'}", user, group, other, operand, step ) );
+					// Discard
+					if ( operand == '+' || operand == '-' )
+					{
+						if ( user )
+							currentPerms.stream().filter( p -> p == PosixFilePermission.OWNER_EXECUTE || p == PosixFilePermission.OWNER_READ || p == PosixFilePermission.OWNER_WRITE ).forEach( newPerms::add );
+						if ( group )
+							currentPerms.stream().filter( p -> p == PosixFilePermission.GROUP_EXECUTE || p == PosixFilePermission.GROUP_READ || p == PosixFilePermission.GROUP_WRITE ).forEach( newPerms::add );
+						if ( other )
+							currentPerms.stream().filter( p -> p == PosixFilePermission.OTHERS_EXECUTE || p == PosixFilePermission.OTHERS_READ || p == PosixFilePermission.OTHERS_WRITE ).forEach( newPerms::add );
+					}
+					step++;
+				}
+				if ( step == 2 )
+				{
+
+				}
+			}
+		}
 	}
 
 	public static void setGroupReadWritePermissions( Path path ) throws IOException

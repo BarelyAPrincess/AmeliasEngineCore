@@ -40,7 +40,6 @@ import javax.annotation.Nullable;
 
 import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ReportingLevel;
-import io.amelia.lang.UncaughtException;
 import io.amelia.support.ConsumerWithException;
 import io.amelia.support.FunctionWithException;
 import io.amelia.support.SupplierWithException;
@@ -698,7 +697,7 @@ public class UtilityObjects
 		return obj == null ? null : ifPresentPredicate.test( obj ) ? obj : null;
 	}
 
-	public static <T> T initClass( @Nonnull Class<T> clz, Object... args ) throws UncaughtException
+	public static <T> T initClass( @Nonnull Class<T> clz, Object... args ) throws ApplicationException.Uncaught
 	{
 		try
 		{
@@ -711,17 +710,17 @@ public class UtilityObjects
 		}
 		catch ( InvocationTargetException e )
 		{
-			if ( e.getTargetException() instanceof UncaughtException )
-				throw ( UncaughtException ) e.getTargetException();
+			if ( e.getTargetException() instanceof ApplicationException.Uncaught )
+				throw ( ApplicationException.Uncaught ) e.getTargetException();
 			else
-				throw new UncaughtException( ReportingLevel.E_ERROR, String.format( "Failed to initialize a new instance of %s, because it has thrown an exception.", clz.getSimpleName() ), e.getTargetException() );
+				throw new ApplicationException.Uncaught( ReportingLevel.E_ERROR, String.format( "Failed to initialize a new instance of %s, because it has thrown an exception.", clz.getSimpleName() ), e.getTargetException() );
 		}
 		catch ( NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException e )
 		{
 			String argClasses = Arrays.stream( args ).map( o -> o.getClass().getSimpleName() ).collect( Collectors.joining( ", " ) );
 			if ( argClasses.length() == 0 )
 				argClasses = "None";
-			throw new UncaughtException( ReportingLevel.E_ERROR, String.format( "Failed to initialize a new instance of %s, does the class have a constructor to match arguments '%s'?", clz.getSimpleName(), argClasses ), e );
+			throw new ApplicationException.Uncaught( ReportingLevel.E_ERROR, String.format( "Failed to initialize a new instance of %s, does the class have a constructor to match arguments '%s'?", clz.getSimpleName(), argClasses ), e );
 		}
 	}
 

@@ -17,7 +17,6 @@ import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 
 import io.amelia.data.ContainerBase;
-import io.amelia.engine.EngineCore;
 import io.amelia.lang.ConfigException;
 import io.amelia.extra.UtilityIO;
 import io.amelia.extra.UtilityObjects;
@@ -171,7 +170,7 @@ public class ConfigRegistry
 	{
 		// WIP Copies config from resources and plugins to config directories.
 
-		Path configPath = Subsystem.FIOS.getPathAndCreate( Subsystem.FIOS.PATH_CONFIG );
+		Path configPath = StorageEngine.getPathAndCreate( StorageEngine.PATH_CONFIG );
 
 		UtilityIO.extractResourceDirectory( "config", configPath, io.amelia.foundation.ConfigRegistry.class );
 	}

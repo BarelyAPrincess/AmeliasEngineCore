@@ -20,14 +20,12 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.engine.subsystem.Subsystem;
-import io.amelia.engine.subsystem.log.EngineLogManager;
-import io.amelia.engine.subsystem.log.EngineLogger;
+import io.amelia.engine.subsystem.StorageEngine;
 import io.amelia.engine.subsystem.log.L;
 import io.amelia.extra.UtilityIO;
 import io.amelia.foundation.Kernel;
+import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ReportingLevel;
-import io.amelia.lang.UncaughtException;
 import io.amelia.support.EnumColor;
 import io.amelia.support.Http;
 import io.amelia.support.IO;
@@ -49,7 +47,7 @@ public class Libraries implements LibrarySource
 	{
 		L.init( Libraries.class.getSimpleName() );
 
-		LIBRARY_DIR = Subsystem.FIOS.getPathAndCreate( Subsystem.FIOS.PATH_LIBS );
+		LIBRARY_DIR = StorageEngine.getPathAndCreate( StorageEngine.PATH_LIBS );
 		INCLUDES_DIR = Paths.get( "local" ).resolve( LIBRARY_DIR );
 
 		try
@@ -62,7 +60,7 @@ public class Libraries implements LibrarySource
 		}
 		catch ( IOException e )
 		{
-			throw new UncaughtException( ReportingLevel.E_ERROR, "There was a problem confirming Read/Write permissions on the libraries directory." );
+			throw new ApplicationException.Uncaught( ReportingLevel.E_ERROR, "There was a problem confirming Read/Write permissions on the libraries directory." );
 		}
 
 		try

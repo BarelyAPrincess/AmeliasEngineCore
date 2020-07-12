@@ -1,5 +1,6 @@
-package io.amelia.engine;
+package io.amelia.engine.subsystem;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -9,19 +10,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-import io.amelia.engine.subsystem.ConfigKeys;
-import io.amelia.engine.subsystem.ConfigRegistry;
+import io.amelia.engine.EngineLooper;
+import io.amelia.engine.subsystem.injection.Libraries;
+import io.amelia.engine.subsystem.injection.MavenReference;
+import io.amelia.engine.subsystem.log.EngineLogRegistry;
 import io.amelia.engine.subsystem.log.EngineLogger;
+import io.amelia.engine.subsystem.looper.LooperRouter;
+import io.amelia.engine.subsystem.looper.MainLooper;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ExceptionReport;
-import io.amelia.lang.UncaughtException;
 import io.amelia.support.DateAndTime;
 import io.amelia.support.DevMeta;
+import io.amelia.support.EnumColor;
+import io.amelia.support.LooperException;
+import io.amelia.support.Runlevel;
 import io.amelia.support.Timing;
 
 public class EngineCore
 {
-	public static final EngineLogger L = EngineLogger.getLogger( EngineLogger.GLOBAL_LOGGER_NAME );
+	public static final EngineLogger L = EngineLogger.getLogger( EngineLogRegistry.GLOBAL_LOGGER_NAMESPACE );
 
 	/**
 	 * An {@link Executor} that can be used to execute tasks in parallel.
@@ -40,7 +50,7 @@ public class EngineCore
 		public Thread newThread( @Nonnull Runnable runnable )
 		{
 			Thread newThread = new Thread( runnable, "AEC Thread #" + String.format( "%d04", mCount.getAndIncrement() ) );
-			newThread.setUncaughtExceptionHandler( ( thread, exp ) -> ExceptionReport.handleSingleException( new UncaughtException( "Uncaught exception thrown on thread \"" + thread.getName() + "\".", exp ) ) );
+			newThread.setUncaughtExceptionHandler( ( thread, exp ) -> ExceptionReport.handleSingleException( new ApplicationException.Uncaught( "Uncaught exception thrown on thread \"" + thread.getName() + "\".", exp ) ) );
 
 			return newThread;
 		}
@@ -52,8 +62,13 @@ public class EngineCore
 	// the CPU with background work
 	static final int THREAD_POOL_SIZE_CORE = Math.max( 4, Math.min( CPU_COUNT - 1, 1 ) );
 	public static long startTime = System.currentTimeMillis();
-	private static EngineCoreApplication app;
+	private static EngineApplication app;
+	private static Runlevel currentRunlevel = Runlevel.INITIALIZATION;
+	private static String currentRunlevelReason = null;
+	private static DevMeta devMeta = new DevMeta();
 	private static boolean init;
+	private static Object phaseTimingObject = new Object();
+	private static Runlevel previousRunlevel;
 	private static Object runlevelTimingObject = new Object();
 	private static Object timingObject = new Object();
 
@@ -96,22 +111,12 @@ public class EngineCore
 		};
 
 		Timing.start( timingObject );
-
-		init();
 	}
 
-	/**
-	 * Indicates if we are running a development build of the server
-	 *
-	 * @return True is we are running in development mode
-	 */
-	public static boolean isDevelopment()
+	public static EngineApplication getApplication()
 	{
-		return devMeta != null && "0".equals( devMeta.getBuildNumber() ) || ConfigRegistry.config.getBoolean( ConfigRegistry.ConfigKeys.DEVELOPMENT_MODE );
-	}
-
-	public static EngineCoreApplication getApplication()
-	{
+		if ( app == null )
+			throw new ApplicationException.Startup( "Application is not initialized!" );
 		return app;
 	}
 
@@ -122,7 +127,7 @@ public class EngineCore
 
 	public static DevMeta getDeveloperMeta()
 	{
-		return new DevMeta();
+		return devMeta;
 	}
 
 	public static Executor getExecutorParallel()
@@ -154,6 +159,16 @@ public class EngineCore
 		return previousRunlevel;
 	}
 
+	public static Runlevel getRunlevel()
+	{
+		return currentRunlevel;
+	}
+
+	public static void setRunlevel( @Nonnull Runlevel level )
+	{
+		setRunlevel( level, null );
+	}
+
 	public static void init()
 	{
 		if ( init )
@@ -161,16 +176,101 @@ public class EngineCore
 
 		synchronized ( EngineCore.class )
 		{
-			app = new EngineCoreApplication();
+			app = new EngineApplication();
 
-			LooperRouter.setMainLooper( new FoundationLooper( app ) );
+			LooperRouter.setMainLooper( new EngineLooper() );
 
 			if ( !app.hasArgument( "no-banner" ) )
-				app.showBanner( L );
+			{
+				L.info( EnumColor.NEGATIVE + "" + EnumColor.GOLD + "Starting " + EngineCore.getDeveloperMeta().getProductName() + " version " + EngineCore.getDeveloperMeta().getVersionDescribe() );
+				L.info( EnumColor.NEGATIVE + "" + EnumColor.GOLD + EngineCore.getDeveloperMeta().getProductCopyright() );
+			}
 
 			L.info( "Application UUID: " + EnumColor.AQUA + app.uuid() );
 
 			init = true;
+		}
+	}
+
+	/**
+	 * Indicates if we are running a development build of the server
+	 *
+	 * @return True is we are running in development mode
+	 */
+	public static boolean isDevelopment()
+	{
+		return devMeta != null && "0".equals( devMeta.getBuildNumber() ) || ConfigRegistry.config.getBoolean( ConfigRegistry.ConfigKeys.DEVELOPMENT_MODE );
+	}
+
+	public static boolean isRunlevel( Runlevel runlevel )
+	{
+		return currentRunlevel == runlevel;
+	}
+
+	/**
+	 * Handles post runlevel change. Should almost always be the very last method call when the runlevel changes.
+	 */
+	private static void onRunlevelChange() throws ApplicationException.Error
+	{
+		Events.getInstance().callEventWithException( new RunlevelEvent( previousRunlevel, currentRunlevel ) );
+
+		app.onRunlevelChange( previousRunlevel, currentRunlevel );
+
+		// Internal runlevel changes happen after this point. Generally progressing the application from each runlevel to the next.
+
+		if ( currentRunlevel == Runlevel.STARTUP )
+		{
+			UUID nullUuid = UUID.fromString( ConfigRegistry.config.getString( ConfigKeys.UUID_NULL ) );
+			UUID rootUuid = UUID.fromString( ConfigRegistry.config.getString( ConfigKeys.UUID_ROOT ) );
+
+			entityNull = getUsers().createVirtualUser( nullUuid );
+			entityRoot = getUsers().createVirtualUser( rootUuid );
+
+			// entityNull = Exceptions.tryCatchOrNotPresent( () -> make( EntitySubject.class, Maps.builder( "uuid", nullUuid ).hashMap() ), exp -> exp instanceof ApplicationException.Error ? ( ApplicationException.Error ) exp : new ApplicationException.Error( "Failed to create the NULL Entity.", exp ) );
+			// entityRoot = Exceptions.tryCatchOrNotPresent( () -> make( EntitySubject.class, Maps.builder( "uuid", rootUuid ).hashMap() ), exp -> exp instanceof ApplicationException.Error ? ( ApplicationException.Error ) exp : new ApplicationException.Error( "Failed to create the ROOT Entity.", exp ) );
+		}
+
+		// Indicates the application has begun the main loop
+		if ( currentRunlevel == Runlevel.MAINLOOP )
+			if ( app instanceof NetworkedApplication )
+				setRunlevelLater( Runlevel.NETWORKING );
+			else
+				setRunlevelLater( Runlevel.STARTED );
+
+		// Indicates the application has started all and any networking
+		if ( currentRunlevel == Runlevel.NETWORKING )
+			setRunlevelLater( Runlevel.STARTED );
+
+		// if ( currentRunlevel == Runlevel.CRASHED || currentRunlevel == Runlevel.RELOAD || currentRunlevel == Runlevel.SHUTDOWN )
+		// L.notice( currentRunlevelReason );
+
+		// TODO Implement the RELOAD runlevel!
+		if ( currentRunlevel == Runlevel.RELOAD )
+			throw new ApplicationException.Error( "Not Implemented. Sorry!" );
+
+		if ( currentRunlevel == Runlevel.SHUTDOWN )
+			app.quitSafely();
+
+		if ( currentRunlevel == Runlevel.CRASHED )
+			app.quitUnsafe();
+
+		if ( currentRunlevel == Runlevel.DISPOSED )
+		{
+			// Runlevel DISPOSED is activated over the ApplicationLooper#joinLoop method returns.
+
+			app.dispose();
+			app = null;
+
+			try
+			{
+				Thread.sleep( 100 );
+			}
+			catch ( InterruptedException e )
+			{
+				// Ignore
+			}
+
+			System.exit( 0 );
 		}
 	}
 
@@ -185,24 +285,19 @@ public class EngineCore
 			/* Load Deployment Libraries */
 			L.info( "Loading deployment libraries defined in \"dependencies.txt\"." );
 			String depends = IO.resourceToString( "dependencies.txt" );
-			if ( !Objs.isEmpty( depends ) ) // Will be null if the file does not exist
+			if ( !UtilityObjects.isEmpty( depends ) ) // Will be null if the file does not exist
 				for ( String depend : depends.split( "\n" ) )
 					if ( !depend.startsWith( "#" ) )
 						Libraries.loadLibrary( new MavenReference( "builtin", depend ) );
 		}
 		catch ( IOException e )
 		{
-			throw new StartupException( "Failed to read the built-in dependencies file.", e );
+			throw new ApplicationException.Startup( "Failed to read the built-in dependencies file.", e );
 		}
 		L.info( EnumColor.AQUA + "Finished downloading deployment libraries." );
 
 		// Call to make sure the INITIALIZATION runlevel is acknowledged by the application.
 		onRunlevelChange();
-	}
-
-	public static void setRunlevel( @Nonnull Runlevel level )
-	{
-		setRunlevel( level, null );
 	}
 
 	/**
@@ -211,7 +306,7 @@ public class EngineCore
 	 */
 	public static void setRunlevel( @Nonnull Runlevel runlevel, @Nullable String reason )
 	{
-		Objs.notNull( runlevel );
+		UtilityObjects.notNull( runlevel );
 		MainLooper mainLooper = LooperRouter.getMainLooper();
 
 		// If we confirm that the current thread is the same one that run the Looper, we make the runlevel change immediate instead of posting it for later.
@@ -266,12 +361,12 @@ public class EngineCore
 			L.info( EnumColor.AQUA + "Application has entered runlevel \"" + runlevel.name() + "\". onRunlevelChange() took " + Timing.finish( runlevelTimingObject ) + "ms!" );
 
 			if ( runlevel == Runlevel.CRASHED )
-				throw new FoundationCrashException();
+				throw new ApplicationException.Crash();
 		}
 		catch ( ApplicationException.Error e )
 		{
 			if ( runlevel == Runlevel.CRASHED )
-				throw new ApplicationException.Runtime( e );
+				throw new ApplicationException.Crash( e );
 			ExceptionReport.handleSingleException( e );
 		}
 	}
@@ -297,7 +392,7 @@ public class EngineCore
 		}
 		catch ( LooperException.InvalidState e )
 		{
-			// L.warning( "shutdown() called but ignored because MainLooper is already quitting. {shutdownReason=" + reason + "}" );
+			L.warning( "shutdown() called but ignored because MainLooper is already quitting. {shutdownReason=" + reason + "}" );
 			// TEMP?
 			e.printStackTrace();
 			System.exit( 1 );
@@ -356,5 +451,34 @@ public class EngineCore
 	public static boolean useTimings()
 	{
 		return false;
+	}
+
+	public static boolean isPrimaryThread()
+	{
+		if ( app == null )
+			throw new ApplicationException.Startup( "Application is not set!" );
+		return app.isPrimaryThread();
+	}
+
+	public static void requirePrimaryThread()
+	{
+		requirePrimaryThread( null );
+	}
+
+	public static void requirePrimaryThread( String errorMessage )
+	{
+		if ( !isPrimaryThread() )
+			throw new ApplicationException.Startup( errorMessage == null ? "Method MUST be called from the primary thread that initialed started the Kernel." : errorMessage );
+	}
+
+	public static void requireRunlevel( Runlevel runlevel )
+	{
+		requireRunlevel( runlevel, null );
+	}
+
+	public static void requireRunlevel( Runlevel runlevel, String errorMessage )
+	{
+		if ( !isRunlevel( runlevel ) )
+			throw new ApplicationException.Startup( errorMessage == null ? "Method MUST be called at runlevel " + runlevel.name() : errorMessage );
 	}
 }

@@ -11,6 +11,9 @@ package io.amelia.lang;
 
 import javax.annotation.Nonnull;
 
+/**
+ * Implemented as an exception container for general exceptions used by, but not limited to, the EngineCore.
+ */
 public final class ApplicationException
 {
 	private ApplicationException()
@@ -242,6 +245,189 @@ public final class ApplicationException
 		public boolean isIgnorable()
 		{
 			return level.isIgnorable();
+		}
+	}
+
+	/**
+	 * Specifically only to be used as an exception thrown when a subset of code fails to start.
+	 * e.g., Users, Permissions, etc.
+	 */
+	public static class Startup extends Uncaught
+	{
+		private static final long serialVersionUID = 1L;
+
+		public Startup( String msg )
+		{
+			super( ReportingLevel.E_ERROR, msg );
+		}
+
+		public Startup( String msg, Throwable e ) throws Uncaught
+		{
+			super( ReportingLevel.E_ERROR, msg, e, true );
+		}
+
+		public Startup( Throwable e ) throws Uncaught
+		{
+			super( ReportingLevel.E_ERROR, e, true );
+		}
+
+		@Override
+		public ReportingLevel handle( ExceptionReport exceptionReport, ExceptionContext exceptionContext )
+		{
+			exceptionReport.addException( ReportingLevel.E_ERROR, this );
+			return ReportingLevel.E_ERROR;
+		}
+	}
+
+	/**
+	 * Used to gracefully interrupt startup.
+	 * Such as if --help or --version was specified.
+	 */
+	public static class StartupInterrupt extends Startup
+	{
+		private static final long serialVersionUID = -4937198089020390887L;
+
+		public StartupInterrupt()
+		{
+			super( "STARTUP INTERRUPT!" );
+		}
+	}
+
+	public static class Uncaught extends RuntimeException implements ExceptionContext
+	{
+		private static final long serialVersionUID = 6854413013575591783L;
+
+		private ReportingLevel level;
+
+		public Uncaught()
+		{
+			this( ReportingLevel.E_UNHANDLED );
+		}
+
+		public Uncaught( ReportingLevel level )
+		{
+			this.level = level;
+		}
+
+		public Uncaught( ReportingLevel level, String message )
+		{
+			super( message );
+			this.level = level;
+		}
+
+		public Uncaught( ReportingLevel level, String msg, Throwable cause )
+		{
+			super( msg, cause );
+			this.level = level;
+			if ( cause instanceof Uncaught )
+				throwCauseException();
+		}
+
+		public Uncaught( ReportingLevel level, String msg, Throwable cause, boolean throwDuplicate ) throws Uncaught
+		{
+			super( msg, cause );
+			this.level = level;
+			if ( cause instanceof Uncaught )
+				if ( throwDuplicate )
+					throw ( Uncaught ) cause;
+				else
+					throwCauseException();
+		}
+
+		public Uncaught( ReportingLevel level, Throwable cause )
+		{
+			super( cause );
+			this.level = level;
+			if ( cause instanceof Uncaught )
+				throwCauseException();
+		}
+
+		public Uncaught( ReportingLevel level, Throwable cause, boolean throwDuplicate ) throws Uncaught
+		{
+			super( cause );
+			this.level = level;
+			if ( cause instanceof Uncaught )
+				if ( throwDuplicate )
+					throw ( Uncaught ) cause;
+				else
+					throwCauseException();
+		}
+
+		public Uncaught( String message )
+		{
+			this( ReportingLevel.E_UNHANDLED, message );
+		}
+
+		public Uncaught( String msg, Throwable cause )
+		{
+			this( ReportingLevel.E_UNHANDLED, msg, cause );
+		}
+
+		public Uncaught( Throwable cause )
+		{
+			this( ReportingLevel.E_UNHANDLED, cause );
+		}
+
+		@Nonnull
+		@Override
+		public ExceptionReport getExceptionReport()
+		{
+			return new ExceptionReport().addException( this );
+		}
+
+		@Override
+		public ReportingLevel getReportingLevel()
+		{
+			return level;
+		}
+
+		public void setReportingLevel( ReportingLevel level )
+		{
+			this.level = level;
+		}
+
+		@Nonnull
+		@Override
+		public Throwable getThrowable()
+		{
+			return this;
+		}
+
+		@Override
+		public ReportingLevel handle( ExceptionReport exceptionReport, ExceptionContext exceptionContext )
+		{
+			exceptionReport.handleException( getCause(), exceptionContext );
+			return level;
+		}
+
+		@Override
+		public boolean isIgnorable()
+		{
+			return level.isIgnorable();
+		}
+
+		private void throwCauseException()
+		{
+			throw new IllegalArgumentException( "The cause argument can't be of it's own type." );
+		}
+	}
+
+	/*
+	 * INTERNAL USE ONLY
+	 * This should be muted within the main() method.
+	 */
+	public static class Crash extends Runtime
+	{
+		private static final long serialVersionUID = -4937198089020390887L;
+
+		public Crash( Throwable cause )
+		{
+			super( cause );
+		}
+
+		public Crash()
+		{
+			super();
 		}
 	}
 }

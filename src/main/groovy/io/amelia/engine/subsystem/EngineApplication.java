@@ -1,31 +1,66 @@
-package io.amelia.engine;
+package io.amelia.engine.subsystem;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
+import javax.annotation.Nonnull;
+
+import io.amelia.data.ContainerBase;
+import io.amelia.data.parcel.ParcelCarrier;
+import io.amelia.data.parcel.ParcelInterface;
+import io.amelia.data.parcel.ParcelReceiver;
+import io.amelia.engine.subsystem.log.L;
+import io.amelia.engine.subsystem.looper.LooperRouter;
+import io.amelia.extra.UtilityEncrypt;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
+import io.amelia.lang.ApplicationException;
+import io.amelia.lang.ExceptionRegistrar;
+import io.amelia.lang.ExceptionReport;
+import io.amelia.lang.ParcelException;
+import io.amelia.lang.ReportingLevel;
+import io.amelia.support.Env;
 import io.amelia.support.EnumColor;
+import io.amelia.support.Runlevel;
+import io.amelia.support.Sys;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
 
-public class EngineCoreApplication
+public final class EngineApplication implements ParcelReceiver, ParcelInterface, ExceptionRegistrar
 {
+	static
+	{
+		System.setProperty( "file.encoding", "utf-8" );
+	}
+
 	public final Thread primaryThread = Thread.currentThread();
 	private final OptionParser optionParser = new OptionParser();
 	private Env env = null;
 	private OptionSet optionSet = null;
 
-	public BaseApplication()
+	public EngineApplication()
 	{
-		if ( Kernel.isDevelopment() )
-			Kernel.L.info( "%s%sApp is running in development mode.", EnumColor.DARK_RED, EnumColor.NEGATIVE );
+		if ( EngineCore.isDevelopment() )
+			L.info( "%s%sApp is running in development mode.", EnumColor.DARK_RED, EnumColor.NEGATIVE );
 
 		optionParser.acceptsAll( Arrays.asList( "?", "h", "help" ), "Show the help" );
 		optionParser.acceptsAll( Arrays.asList( "v", "version" ), "Show the version" );
 
 		optionParser.accepts( "env-file", "The env file" ).withRequiredArg().ofType( String.class ).defaultsTo( ".env" );
 		optionParser.accepts( "env", "Override env values" ).withRequiredArg().ofType( String.class );
+		optionParser.accepts( "no-banner", "Disables the banner" );
 
-		for ( String pathKey : Kernel.getPathSlugs() )
+		for ( String pathKey : StorageEngine.getPathSlugs() )
 			optionParser.accepts( "dir-" + pathKey, "Sets the " + pathKey + " directory path." ).withRequiredArg().ofType( String.class );
+
+		// CommandDispatch.handleCommands();
 	}
 
 	public void addArgument( String arg, String desc )
@@ -57,10 +92,10 @@ public class EngineCoreApplication
 	@Override
 	public void fatalError( ExceptionReport report, boolean crashOnError )
 	{
-		if ( !Objs.stackTraceAntiLoop( getClass(), "fatalError" ) )
+		if ( !UtilityObjects.stackTraceAntiLoop( getClass(), "fatalError" ) )
 			return;
 		if ( report.hasErrored() && crashOnError )
-			Foundation.setRunlevel( Runlevel.CRASHED );
+			EngineCore.setRunlevel( Runlevel.CRASHED );
 	}
 
 	public Env getEnv()
@@ -95,16 +130,10 @@ public class EngineCoreApplication
 		return Optional.ofNullable( ( List<String> ) optionSet.valuesOf( arg ) );
 	}
 
-	public VendorMeta getVendorMeta()
+	@Override
+	public void handleParcel( ParcelCarrier parcelCarrier ) throws ParcelException.Error
 	{
-		return new VendorMeta( new HashMap<String, String>()
-		{{
-			put( VendorMeta.NAME, Kernel.getDevMeta().getProductName() );
-			put( VendorMeta.DESCRIPTION, Kernel.getDevMeta().getProductDescription() );
-			put( VendorMeta.AUTHORS, Kernel.getDevMeta().getDeveloperName() );
-			put( VendorMeta.GITHUB_BASE_URL, Kernel.getDevMeta().getGitRepoUrl() );
-			put( VendorMeta.VERSION, Kernel.getDevMeta().getVersionDescribe() );
-		}} );
+
 	}
 
 	public boolean hasArgument( String arg )
@@ -123,14 +152,34 @@ public class EngineCoreApplication
 		return false;
 	}
 
-	public abstract void onRunlevelChange( Runlevel previousRunlevel, Runlevel currentRunlevel ) throws ApplicationException.Error;
+	public void onRunlevelChange( Runlevel previousRunlevel, Runlevel currentRunlevel ) throws ApplicationException.Error
+	{
+		//if ( currentRunlevel == Runlevel.MAINLOOP )
+		// LooperRouter.getMainLooper().postTaskRepeatingLater( entry -> Tasks.heartbeat( LooperRouter.getMainLooper().getLastPolledMillis() ), 50L, 50L );
+		if ( currentRunlevel == Runlevel.SHUTDOWN )
+		{
+			L.info( "Saving Configuration..." );
+			ConfigRegistry.save();
+
+			try
+			{
+				L.info( "Clearing Excess Cache..." );
+				long keepHistory = ConfigRegistry.config.getLong( "advanced.execute.keepHistory" ).orElse( 30L );
+				ConfigRegistry.clearCache( keepHistory );
+			}
+			catch ( IllegalArgumentException e )
+			{
+				L.warning( "Cache directory is invalid!" );
+			}
+		}
+	}
 
 	/**
 	 * Handles internal argument options and triggers, such as
 	 *
-	 * @throws StartupInterruptException
+	 * @throws ApplicationException.StartupInterrupt
 	 */
-	public final void parse( String[] args ) throws StartupInterruptException
+	public final void parse( String[] args ) throws ApplicationException.StartupInterrupt
 	{
 		optionSet = optionParser.parse( args );
 
@@ -142,15 +191,15 @@ public class EngineCoreApplication
 			}
 			catch ( IOException e )
 			{
-				throw new StartupException( e );
+				throw new ApplicationException.Startup( e );
 			}
-			throw new StartupInterruptException();
+			throw new ApplicationException.StartupInterrupt();
 		}
 
 		if ( optionSet.has( "version" ) )
 		{
-			Kernel.L.info( Kernel.getDevMeta().getProductDescribed() );
-			throw new StartupInterruptException();
+			L.info( EngineCore.getDeveloperMeta().getProductDescribed() );
+			throw new ApplicationException.StartupInterrupt();
 		}
 
 		try
@@ -162,19 +211,19 @@ public class EngineCoreApplication
 			/* Override defaults and env with command args */
 			for ( OptionSpec<?> optionSpec : optionSet.specs() )
 				for ( String optionKey : optionSpec.options() )
-					if ( !Objs.isNull( optionSpec.value( optionSet ) ) )
+					if ( !UtilityObjects.isNull( optionSpec.value( optionSet ) ) )
 					{
 						if ( optionKey.startsWith( "dir-" ) )
-							Kernel.setPath( optionKey.substring( 4 ), ( String ) optionSpec.value( optionSet ) );
+							StorageEngine.setPath( optionKey.substring( 4 ), ( String ) optionSpec.value( optionSet ) );
 						else if ( env.isValueSet( optionKey ) )
 							env.set( optionKey, optionSpec.value( optionSet ), false );
 					}
 
 			// XXX Use Encrypt::hash as an alternative to Encrypt::uuid
-			env.computeValue( "instance-id", Encrypt::uuid, true );
+			env.computeValue( "instance-id", UtilityEncrypt::uuid, true );
 
-			Kernel.setAppPath( env.getString( "app-dir" ).map( Paths::get ).orElse( Sys.getAppPath().orElseThrow( () -> new StartupException( "The app path is not specified nor could we resolve it." ) ) ) );
-			env.getStringsMap().filter( e -> e.getKey().endsWith( "-dir" ) ).forEach( e -> Kernel.setPath( e.getKey().substring( 0, e.getKey().length() - 4 ), Strs.split( e.getValue(), "/" ).toArray( String[]::new ) ) );
+			StorageEngine.setAppPath( env.getString( "app-dir" ).map( Paths::get ).orElse( Sys.getAppPath().orElseThrow( () -> new ApplicationException.Startup( "The app path is not specified nor could we resolve it." ) ) ) );
+			env.getStringsMap().filter( e -> e.getKey().endsWith( "-dir" ) ).forEach( e -> StorageEngine.setPath( e.getKey().substring( 0, e.getKey().length() - 4 ), UtilityStrings.split( e.getValue(), "/" ).toArray( String[]::new ) ) );
 
 			ConfigRegistry.config.setEnvironmentVariables( env.map() );
 
@@ -183,20 +232,22 @@ public class EngineCoreApplication
 				envNode.setValue( entry.getKey().replace( '-', '_' ), entry.getValue() );
 			envNode.addFlag( ContainerBase.Flags.READ_ONLY, ContainerBase.Flags.NO_SAVE );
 
+			StorageEngine.init();
+
 			// ConfigRegistry should load here!
-			Foundation.invokeHook( Foundation.class, Foundation.HOOK_ACTION_PARSE );
+			// Foundation.invokeHook( Foundation.class, Foundation.HOOK_ACTION_PARSE );
 			if ( !ConfigRegistry.isLoaded() )
 				throw new ApplicationException.Error( "ConfigRegistry did not initialize as expected. Is the `HOOK_ACTION_PARSE` implemented to load data into the ConfigRegistry?" );
 
 			parse();
 		}
-		catch ( StartupException e )
+		catch ( ApplicationException.Startup e )
 		{
 			throw e;
 		}
 		catch ( Exception e )
 		{
-			throw new StartupException( e );
+			throw new ApplicationException.Startup( e );
 		}
 	}
 
@@ -205,7 +256,10 @@ public class EngineCoreApplication
 	 *
 	 * @throws Exception
 	 */
-	protected abstract void parse() throws Exception;
+	protected void parse() throws Exception
+	{
+
+	}
 
 	void quitSafely()
 	{
@@ -217,15 +271,10 @@ public class EngineCoreApplication
 		LooperRouter.quitUnsafely();
 	}
 
-	public void showBanner( Kernel.Logger logger )
+	@Override
+	public void sendToAll( ParcelCarrier parcel )
 	{
-		logger.info( EnumColor.NEGATIVE + "" + EnumColor.GOLD + "Starting " + Kernel.getDevMeta().getProductName() + " version " + Kernel.getDevMeta().getVersionDescribe() );
-		logger.info( EnumColor.NEGATIVE + "" + EnumColor.GOLD + Kernel.getDevMeta().getProductCopyright() );
-	}
 
-	public void throwStartupException( Exception e ) throws StartupException
-	{
-		throw new StartupException( "There was a problem starting the application", e );
 	}
 
 	@Nonnull

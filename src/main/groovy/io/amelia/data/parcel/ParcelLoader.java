@@ -37,7 +37,7 @@ import io.amelia.data.yaml.YamlConstructor;
 import io.amelia.data.yaml.YamlRepresenter;
 import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ParcelableException;
-import io.amelia.support.Encrypt;
+import io.amelia.extra.UtilityEncrypt;
 import io.amelia.extra.UtilityIO;
 import io.amelia.extra.UtilityMaps;
 import io.amelia.extra.UtilityStrings;
@@ -400,7 +400,7 @@ public class ParcelLoader
 	public static String hashObject( Object obj )
 	{
 		// yaml.dump( obj ) OR gson.toJson( obj )?
-		return obj == null ? null : Encrypt.md5Hex( obj instanceof String ? ( String ) obj : gson.toJson( obj ) );
+		return obj == null ? null : UtilityEncrypt.md5Hex( obj instanceof String ? ( String ) obj : gson.toJson( obj ) );
 	}
 
 	private ParcelLoader()

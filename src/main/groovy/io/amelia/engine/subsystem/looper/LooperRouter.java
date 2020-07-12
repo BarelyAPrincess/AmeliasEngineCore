@@ -11,7 +11,7 @@ package io.amelia.engine.subsystem.looper;
 
 import io.amelia.data.parcel.ParcelCarrier;
 import io.amelia.data.parcel.ParcelReceiver;
-import io.amelia.engine.EngineCore;
+import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.lang.ApplicationException;
 
 /**

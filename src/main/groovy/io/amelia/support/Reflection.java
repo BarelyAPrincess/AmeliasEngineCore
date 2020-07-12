@@ -14,8 +14,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ReflectPermission;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import io.amelia.extra.UtilityObjects;
 import io.amelia.extra.UtilityLists;
@@ -28,6 +32,20 @@ import io.amelia.extra.UtilityLists;
 public class Reflection
 {
 	private static final ThreadLocal<List<StackTraceElement>> methodCallEnforcements = new ThreadLocal<>();
+
+	public static String getCallerClassName( @Nonnull Class<?> yourClass )
+	{
+		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+		for ( int i = 1; i < stElements.length; i++ )
+		{
+			StackTraceElement ste = stElements[i];
+			if ( !ste.getClassName().equals( ReflectPermission.class.getName() ) && !ste.getClassName().equals( yourClass.getName() ) && ste.getClassName().indexOf( "java.lang.Thread" ) != 0 )
+			{
+				return ste.getClassName();
+			}
+		}
+		return null;
+	}
 
 	public static Method getMethod( Class<?> aClass, String methodName )
 	{

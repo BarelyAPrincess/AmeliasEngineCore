@@ -44,8 +44,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
-import javafx.util.Pair;
-
 public class UtilityMaps
 {
 	/**

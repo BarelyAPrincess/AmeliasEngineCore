@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.foundation.Kernel;
 import io.amelia.extra.UtilityIO;
 
@@ -39,7 +40,7 @@ public class Sys
 	{
 		try
 		{
-			if ( Kernel.isDevelopment() )
+			if ( EngineCore.isDevelopment() )
 				return io.amelia.support.Voluntary.of( Files.createDirectories( Paths.get( "workspace" ) ) );
 			Path path = Paths.get( io.amelia.support.Sys.class.getProtectionDomain().getCodeSource().getLocation().toURI() );
 			if ( Files.isDirectory( path ) )

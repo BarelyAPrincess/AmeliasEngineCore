@@ -11,7 +11,8 @@ import java.util.Properties;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.engine.EngineCore;
+import io.amelia.engine.subsystem.EngineCore;
+import io.amelia.engine.subsystem.log.L;
 import io.amelia.lang.ApplicationException;
 import io.amelia.extra.UtilityIO;
 
@@ -19,31 +20,45 @@ public class DevMeta implements DevMetaProvider
 {
 	private Properties prop = new Properties();
 
-	public DevMeta() throws ApplicationException.Error, IOException
+	public DevMeta()
 	{
 		this( "build.properties" );
 	}
 
-	public DevMeta( @Nonnull Path propFile ) throws IOException, ApplicationException.Error
+	public DevMeta( @Nonnull Path propFile )
 	{
-		loadProp( Files.newInputStream( propFile ) );
+		try
+		{
+			loadProp( Files.newInputStream( propFile ) );
+		}
+		catch ( IOException e )
+		{
+			L.severe( "The DevMeta file \"" + propFile + "\" does not exist!" );
+		}
 	}
 
-	public DevMeta( @Nonnull File propFile ) throws FileNotFoundException, ApplicationException.Error
+	public DevMeta( @Nonnull File propFile )
 	{
-		loadProp( new FileInputStream( propFile ) );
+		try
+		{
+			loadProp( new FileInputStream( propFile ) );
+		}
+		catch ( FileNotFoundException e )
+		{
+			L.severe( "The DevMeta file \"" + propFile + "\" does not exist!" );
+		}
 	}
 
-	public DevMeta( @Nonnull String fileName ) throws ApplicationException.Error, IOException
+	public DevMeta( @Nonnull String fileName )
 	{
 		this( EngineCore.class, fileName );
 	}
 
-	public DevMeta( @Nonnull Class<?> cls, @Nonnull String fileName ) throws ApplicationException.Error
+	public DevMeta( @Nonnull Class<?> cls, @Nonnull String fileName )
 	{
 		InputStream is = cls.getClassLoader().getResourceAsStream( fileName );
 		if ( is == null )
-			EngineCore.L.warning( "The DevMeta file \"" + fileName + "\" does not exist!" );
+			L.severe( "The DevMeta file \"" + fileName + "\" does not exist!" );
 		else
 			loadProp( is );
 	}
@@ -58,7 +73,7 @@ public class DevMeta implements DevMetaProvider
 		return prop.getProperty( key );
 	}
 
-	private void loadProp( @Nonnull InputStream is ) throws ApplicationException.Error
+	private void loadProp( @Nonnull InputStream is )
 	{
 		try
 		{
@@ -66,7 +81,7 @@ public class DevMeta implements DevMetaProvider
 		}
 		catch ( IOException e )
 		{
-			throw new ApplicationException.Error( e );
+			L.severe( e );
 		}
 		finally
 		{

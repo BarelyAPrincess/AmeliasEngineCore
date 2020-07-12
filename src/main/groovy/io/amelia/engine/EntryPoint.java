@@ -1,6 +1,8 @@
 package io.amelia.engine;
 
-import io.amelia.lang.StartupInterruptException;
+import io.amelia.engine.subsystem.EngineApplication;
+import io.amelia.engine.subsystem.EngineCore;
+import io.amelia.lang.ApplicationException;
 
 public class EntryPoint
 {
@@ -8,13 +10,13 @@ public class EntryPoint
 	{
 		EngineCore.init();
 
-		EngineCoreApplication app = EngineCore.getApplication();
+		EngineApplication app = EngineCore.getApplication();
 
 		try
 		{
 			app.parse( args );
 		}
-		catch ( StartupInterruptException e )
+		catch ( ApplicationException.StartupInterrupt | ApplicationException.Crash e )
 		{
 			// Prevent exception from being printed to console
 			return;

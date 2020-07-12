@@ -21,7 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.amelia.engine.EngineCore;
+import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.engine.subsystem.ConfigKeys;
 import io.amelia.engine.subsystem.ConfigRegistry;
 import io.amelia.engine.subsystem.looper.queue.AbstractQueue;

@@ -18,7 +18,7 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.engine.EngineCore;
+import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.engine.subsystem.looper.AbstractLooper;
 import io.amelia.engine.subsystem.looper.LooperTaskTrait;
 import io.amelia.lang.ApplicationException;
