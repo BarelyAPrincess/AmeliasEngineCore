@@ -192,6 +192,17 @@ public class ParcelChecker
 			return valueFlag;
 		}
 
+		public void setValueFlag( ValueFlag valueFlag )
+		{
+			if ( valueFlag == ValueFlag.DENIED )
+			{
+				valueType = null;
+				def = null;
+			}
+
+			this.valueFlag = valueFlag;
+		}
+
 		public ValueType getValueType()
 		{
 			return valueType;
@@ -206,17 +217,6 @@ public class ParcelChecker
 		protected boolean isTrimmable0()
 		{
 			return false;
-		}
-
-		public void setValueFlag( ValueFlag valueFlag )
-		{
-			if ( valueFlag == ValueFlag.DENIED )
-			{
-				valueType = null;
-				def = null;
-			}
-
-			this.valueFlag = valueFlag;
 		}
 
 		public void setValueType( @Nonnull ValueType valueType, @Nullable Object def ) throws ParcelException.Error

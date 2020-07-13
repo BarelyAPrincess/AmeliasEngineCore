@@ -2,35 +2,35 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright (c) 2017 Joel Greene <joel.greene@penoaks.com>
- * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * Copyright (c) 2019 Amelia Sara Greene <barelyaprincess@gmail.com>
+ * Copyright (c) 2019 Penoaks Publishing LLC <development@penoaks.com>
  * <p>
  * All Rights Reserved.
  */
 package io.amelia.engine.scripting;
 
-import com.chiorichan.utils.UtilObjects;
-
 import java.nio.charset.Charset;
+import java.util.stream.Stream;
 
 import groovy.lang.Script;
+import io.amelia.engine.scripting.lang.ScriptingException;
+import io.amelia.lang.ExceptionContext;
 import io.amelia.lang.ExceptionReport;
-import io.amelia.lang.IException;
 import io.amelia.lang.ReportingLevel;
-import io.amelia.lang.ScriptingException;
 import io.netty.buffer.ByteBuf;
 
 /**
  * Contains the end result of {@link ScriptingFactory#eval(ScriptingContext)}
  */
-public class ScriptingResult extends ExceptionReport
+public class ScriptingResult
 {
-	private boolean success = false;
-	private String reason = null;
-	private ByteBuf content;
-	private Object obj = null;
-	private Script script = null;
 	private final ScriptingContext context;
+	private ByteBuf content;
+	private ExceptionReport exceptionReport = new ExceptionReport();
+	private Object obj = null;
+	private String reason = null;
+	private Script script = null;
+	private boolean success = false;
 
 	ScriptingResult( ScriptingContext context, ByteBuf content )
 	{
@@ -38,42 +38,59 @@ public class ScriptingResult extends ExceptionReport
 		this.content = content;
 	}
 
-	@Override
-	public com.chiorichan.factory.ScriptingResult addException( IException exception )
+	public ScriptingResult addException( Throwable throwable )
 	{
-		IException.check( exception );
-		if ( exception != null )
-			if ( exception instanceof ScriptingException )
+		if ( throwable != null )
+			if ( throwable instanceof ScriptingException.Error )
 			{
 				// If this EvalException never had it's script trace populated, we handle it here
-				if ( !( ( ScriptingException ) exception ).hasScriptTrace() )
-					if ( context.factory() != null )
-						( ( ScriptingException ) exception ).populateScriptTrace( context.factory().stack() );
-					else if ( context.request() != null )
-						( ( ScriptingException ) exception ).populateScriptTrace( context.request().getScriptingFactory().stack() );
-				caughtExceptions.add( exception );
+				if ( !( ( ScriptingException.Error ) throwable ).hasScriptTrace() )
+					if ( context.getScriptingFactory() != null )
+						( ( ScriptingException.Error ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+					else if ( context.getResult() != null )
+						( ( ScriptingException.Error ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+				exceptionReport.addException( ( ScriptingException.Error ) throwable );
+			}
+			else if ( throwable instanceof ScriptingException.Runtime )
+			{
+				// If this EvalException never had it's script trace populated, we handle it here
+				if ( !( ( ScriptingException.Runtime ) throwable ).hasScriptTrace() )
+					if ( context.getScriptingFactory() != null )
+						( ( ScriptingException.Runtime ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+					else if ( context.getResult() != null )
+						( ( ScriptingException.Runtime ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+				exceptionReport.addException( ( ScriptingException.Runtime ) throwable );
 			}
 			else
-				super.addException( exception );
+				exceptionReport.addException( new ScriptingException.Error( throwable ).populateScriptTrace( context.getScriptingFactory().getStack() ) );
 		return this;
 	}
 
-	@Override
-	public com.chiorichan.factory.ScriptingResult addException( ReportingLevel level, Throwable throwable )
+	public ScriptingResult addException( ReportingLevel level, Throwable throwable )
 	{
 		if ( throwable != null )
-			if ( throwable instanceof ScriptingException )
+			if ( throwable instanceof ScriptingException.Error )
 			{
 				// If this EvalException never had it's script trace populated, we handle it here
-				if ( !( ( ScriptingException ) throwable ).hasScriptTrace() )
-					if ( context.factory() != null )
-						( ( ScriptingException ) throwable ).populateScriptTrace( context.factory().stack() );
-					else if ( context.request() != null )
-						( ( ScriptingException ) throwable ).populateScriptTrace( context.request().getScriptingFactory().stack() );
-				caughtExceptions.add( ( ScriptingException ) throwable );
+				if ( !( ( ScriptingException.Error ) throwable ).hasScriptTrace() )
+					if ( context.getScriptingFactory() != null )
+						( ( ScriptingException.Error ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+					else if ( context.getResult() != null )
+						( ( ScriptingException.Error ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+				exceptionReport.addException( level, ( ScriptingException.Error ) throwable );
+			}
+			else if ( throwable instanceof ScriptingException.Runtime )
+			{
+				// If this EvalException never had it's script trace populated, we handle it here
+				if ( !( ( ScriptingException.Runtime ) throwable ).hasScriptTrace() )
+					if ( context.getScriptingFactory() != null )
+						( ( ScriptingException.Runtime ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+					else if ( context.getResult() != null )
+						( ( ScriptingException.Runtime ) throwable ).populateScriptTrace( context.getScriptingFactory().getStack() );
+				exceptionReport.addException( level, ( ScriptingException.Runtime ) throwable );
 			}
 			else
-				caughtExceptions.add( new ScriptingException( level, throwable ).populateScriptTrace( context.factory().stack() ) );
+				exceptionReport.addException( level, new ScriptingException.Error( throwable ).populateScriptTrace( context.getScriptingFactory().getStack() ) );
 		return this;
 	}
 
@@ -87,24 +104,29 @@ public class ScriptingResult extends ExceptionReport
 		return context;
 	}
 
-	public IException[] getExceptions()
+	public ExceptionReport getExceptionReport()
 	{
-		return caughtExceptions.toArray( new IException[0] );
+		return exceptionReport;
+	}
+
+	public Stream<ExceptionContext> getSevereExceptions()
+	{
+		return exceptionReport.getSevereExceptions();
+	}
+
+	public Stream<ExceptionContext> getIgnorableExceptions()
+	{
+		return exceptionReport.getIgnorableExceptions();
+	}
+
+	public Stream<ExceptionContext> getExceptions()
+	{
+		return exceptionReport.getExceptions();
 	}
 
 	public Object getObject()
 	{
 		return obj;
-	}
-
-	public Script getScript()
-	{
-		return script;
-	}
-
-	public void setScript( Script script )
-	{
-		this.script = script;
 	}
 
 	public String getReason()
@@ -114,14 +136,25 @@ public class ScriptingResult extends ExceptionReport
 		return reason;
 	}
 
-	public String getString()
+	public Script getScript()
 	{
-		return getString( false );
+		return script;
 	}
 
-	public String getString( boolean includeObj )
+	public String getString()
 	{
-		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) ) + ( includeObj ? UtilObjects.castToString( obj ) : "" );
+		return ( content == null ? "" : content.toString( Charset.defaultCharset() ) );
+	}
+
+	public void handleException( Throwable throwable )
+	{
+		exceptionReport.handleException( throwable );
+		setFailure();
+	}
+
+	public boolean hasObject()
+	{
+		return obj != null;
 	}
 
 	public boolean isSuccessful()
@@ -129,20 +162,31 @@ public class ScriptingResult extends ExceptionReport
 		return success;
 	}
 
+	public ScriptingResult setFailure()
+	{
+		success = false;
+		return this;
+	}
+
 	public void setObject( Object obj )
 	{
 		this.obj = obj;
 	}
 
-	public com.chiorichan.factory.ScriptingResult setReason( String reason )
+	public ScriptingResult setReason( String reason )
 	{
 		this.reason = reason;
 		return this;
 	}
 
-	public com.chiorichan.factory.ScriptingResult success( boolean success )
+	public void setScript( Script script )
 	{
-		this.success = success;
+		this.script = script;
+	}
+
+	public ScriptingResult setSuccess()
+	{
+		success = true;
 		return this;
 	}
 

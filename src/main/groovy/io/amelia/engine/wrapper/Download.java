@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.SocketTimeoutException;
@@ -15,7 +14,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import io.amelia.engine.subsystem.log.L;
+import io.amelia.engine.log.L;
 import io.amelia.extra.UtilityEncrypt;
 
 public class Download implements IDownload

@@ -9,15 +9,6 @@
  */
 package io.amelia.engine.scripting.event;
 
-import com.chiorichan.event.EventHandler;
-import com.chiorichan.event.Listener;
-import com.chiorichan.factory.ScriptingContext;
-import com.chiorichan.net.http.HttpRequestWrapper;
-import com.chiorichan.utils.UtilEncryption;
-import com.chiorichan.utils.UtilObjects;
-
-import org.apache.commons.io.FileUtils;
-
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -33,9 +24,12 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import io.amelia.foundation.ConfigRegistry;
-import io.amelia.lang.EnumColor;
-import io.amelia.logging.LogBuilder;
+import io.amelia.engine.config.ConfigRegistry;
+import io.amelia.engine.scripting.ScriptingContext;
+import io.amelia.extra.UtilityEncrypt;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.support.EnumColor;
 import io.netty.buffer.ByteBufInputStream;
 
 /**
@@ -45,56 +39,39 @@ import io.netty.buffer.ByteBufInputStream;
  */
 public class PostImageProcessor implements Listener
 {
-	static class RGBColorFilter extends RGBImageFilter
-	{
-		private final int filter;
-
-		RGBColorFilter( int filter )
-		{
-			this.filter = filter;
-			canFilterIndexColorModel = true;
-		}
-
-		@Override
-		public int filterRGB( int x, int y, int rgb )
-		{
-			return rgb & filter;
-		}
-	}
-
 	@EventHandler()
 	public void onEvent( PostEvalEvent event )
 	{
 		try
 		{
-			if ( event.context().contentType() == null || !event.context().contentType().toLowerCase().startsWith( "image" ) )
+			if ( event.context().getContentType() == null || !event.context().getContentType().toLowerCase().startsWith( "image" ) )
 				return;
 
 			float x = -1;
 			float y = -1;
 
-			boolean cacheEnabled = ConfigRegistry.i().getBoolean( "advanced.processors.imageProcessorCache", true );
+			boolean cacheEnabled = ConfigRegistry.config.getBoolean( "advanced.processors.imageProcessorCache", true );
 			boolean grayscale = false;
 
 			ScriptingContext context = event.context();
 			HttpRequestWrapper request = context.request();
 
-			if ( !UtilObjects.isNull( request.getArgument( "width" ) ) )
+			if ( !UtilityObjects.isNull( request.getArgument( "width" ) ) )
 				x = request.getArgumentInt( "width" );
 
-			if ( !UtilObjects.isNull( request.getArgument( "height" ) ) )
+			if ( !UtilityObjects.isNull( request.getArgument( "height" ) ) )
 				y = request.getArgumentInt( "height" );
 
-			if ( !UtilObjects.isNull( request.getArgument( "x" ) ) )
+			if ( !UtilityObjects.isNull( request.getArgument( "x" ) ) )
 				x = request.getArgumentInt( "x" );
 
-			if ( !UtilObjects.isNull( request.getArgument( "y" ) ) )
+			if ( !UtilityObjects.isNull( request.getArgument( "y" ) ) )
 				y = request.getArgumentInt( "y" );
 
-			if ( !UtilObjects.isNull( request.getArgument( "w" ) ) )
+			if ( !UtilityObjects.isNull( request.getArgument( "w" ) ) )
 				x = request.getArgumentInt( "w" );
 
-			if ( !UtilObjects.isNull( request.getArgument( "h" ) ) )
+			if ( !UtilityObjects.isNull( request.getArgument( "h" ) ) )
 				y = request.getArgumentInt( "h" );
 
 			if ( request.hasArgument( "thumb" ) )
@@ -109,12 +86,12 @@ public class PostImageProcessor implements Listener
 			// Tests if our Post Processor can process the current image.
 			List<String> readerFormats = Arrays.asList( ImageIO.getReaderFormatNames() );
 			List<String> writerFormats = Arrays.asList( ImageIO.getWriterFormatNames() );
-			if ( context.contentType() != null && !readerFormats.contains( context.contentType().split( "/" )[1].toLowerCase() ) )
+			if ( context.getContentType() != null && !readerFormats.contains( context.getContentType().split( "/" )[1].toLowerCase() ) )
 				return;
 
-			int inx = event.context().buffer().readerIndex();
-			BufferedImage img = ImageIO.read( new ByteBufInputStream( event.context().buffer() ) );
-			event.context().buffer().readerIndex( inx );
+			int inx = event.context().getBuffer().readerIndex();
+			BufferedImage img = ImageIO.read( new ByteBufInputStream( event.context().getBuffer() ) );
+			event.context().getBuffer().readerIndex( inx );
 
 			if ( img == null )
 				return;
@@ -152,17 +129,17 @@ public class PostImageProcessor implements Listener
 				return;
 
 			// Produce a unique encapsulated id based on this image processing request
-			String encapId = UtilEncryption.md5( context.filename() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
-			File tmp = context.site() == null ? ConfigRegistry.i().getDirectoryCache() : context.site().directoryTemp();
-			File file = new File( tmp, encapId + "_" + new File( context.filename() ).getName() );
+			String encapId = UtilityEncrypt.md5( context.getFileName() + w1 + h1 + request.getArgument( "argb" ) + grayscale );
+			File tmp = context.getSite() == null ? ConfigRegistry.config.getDirectoryCache() : context.site().directoryTemp();
+			File file = new File( tmp, encapId + "_" + new File( context.getFileName() ).getName() );
 
 			if ( cacheEnabled && file.exists() )
 			{
-				event.context().resetAndWrite( FileUtils.readFileToByteArray( file ) );
+				event.context().resetAndWrite( UtilityIO.readFileToBytes( file ) );
 				return;
 			}
 
-			Image image = resize ? img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), ConfigRegistry.i().getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH ) : img;
+			Image image = resize ? img.getScaledInstance( Math.round( w1 ), Math.round( h1 ), ConfigRegistry.config.getBoolean( "advanced.processors.useFastGraphics", true ) ? Image.SCALE_FAST : Image.SCALE_SMOOTH ) : img;
 
 			// TODO Report malformed parameters to user
 
@@ -184,19 +161,19 @@ public class PostImageProcessor implements Listener
 			}
 
 			if ( resize )
-				LogBuilder.get().info( EnumColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
+				L.info( EnumColor.GRAY + "Resized image from " + Math.round( w ) + "px by " + Math.round( h ) + "px to " + Math.round( w1 ) + "px by " + Math.round( h1 ) + "px" );
 
 			if ( rtn != null )
 			{
 				ByteArrayOutputStream bs = new ByteArrayOutputStream();
 
-				if ( context.contentType() != null && writerFormats.contains( context.contentType().split( "/" )[1].toLowerCase() ) )
-					ImageIO.write( rtn, context.contentType().split( "/" )[1].toLowerCase(), bs );
+				if ( context.getContentType() != null && writerFormats.contains( context.contentType().split( "/" )[1].toLowerCase() ) )
+					ImageIO.write( rtn, context.getContentType().split( "/" )[1].toLowerCase(), bs );
 				else
 					ImageIO.write( rtn, "png", bs );
 
 				if ( cacheEnabled && !file.exists() )
-					FileUtils.writeByteArrayToFile( file, bs.toByteArray() );
+					UtilityIO.writeBytesToFile( file, bs.toByteArray() );
 
 				event.context().resetAndWrite( bs.toByteArray() );
 			}
@@ -207,5 +184,22 @@ public class PostImageProcessor implements Listener
 		}
 
 		return;
+	}
+
+	static class RGBColorFilter extends RGBImageFilter
+	{
+		private final int filter;
+
+		RGBColorFilter( int filter )
+		{
+			this.filter = filter;
+			canFilterIndexColorModel = true;
+		}
+
+		@Override
+		public int filterRGB( int x, int y, int rgb )
+		{
+			return rgb & filter;
+		}
 	}
 }

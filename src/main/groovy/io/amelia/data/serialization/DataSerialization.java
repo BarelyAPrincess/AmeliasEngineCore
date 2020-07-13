@@ -47,6 +47,7 @@ public class DataSerialization
 	 *
 	 * @param args  Arguments for deserialization
 	 * @param clazz Class to deserialize into
+	 *
 	 * @return New instance of the specified class
 	 */
 	public static DataSerializable deserializeObject( Map<String, Object> args, Class<? extends DataSerializable> clazz )
@@ -62,6 +63,7 @@ public class DataSerialization
 	 * If a new instance could not be made, an example being the class not fully implementing the interface, null will be returned.
 	 *
 	 * @param args Arguments for deserialization
+	 *
 	 * @return New instance of the specified class
 	 */
 	public static DataSerializable deserializeObject( Map<String, Object> args )
@@ -98,6 +100,7 @@ public class DataSerialization
 	 * Gets the correct alias for the given {@link DataSerializable} class
 	 *
 	 * @param clazz Class to get alias for
+	 *
 	 * @return Alias to use for the class
 	 */
 	public static String getAlias( Class<? extends DataSerializable> clazz )
@@ -126,6 +129,7 @@ public class DataSerialization
 	 * Attempts to get a registered {@link DataSerializable} class by its alias
 	 *
 	 * @param alias Alias of the serializable
+	 *
 	 * @return Registered class, or null if not found
 	 */
 	public static Class<? extends DataSerializable> getClassByAlias( String alias )
@@ -154,6 +158,7 @@ public class DataSerialization
 	 *
 	 * @param clazz Class to register
 	 * @param alias Alias to register as
+	 *
 	 * @see SerializableAs
 	 */
 	public static void registerClass( Class<? extends DataSerializable> clazz, String alias )

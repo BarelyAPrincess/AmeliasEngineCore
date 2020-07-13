@@ -2,74 +2,96 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  * <p>
- * Copyright (c) 2017 Joel Greene <joel.greene@penoaks.com>
- * Copyright (c) 2017 Penoaks Publishing LLC <development@penoaks.com>
+ * Copyright (c) 2019 Amelia Sara Greene <barelyaprincess@gmail.com>
+ * Copyright (c) 2019 Penoaks Publishing LLC <development@penoaks.com>
  * <p>
  * All Rights Reserved.
  */
 package io.amelia.engine.scripting;
 
-import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.CopyOnWriteArrayList;
 
+import io.amelia.data.TypeBase;
+import io.amelia.engine.config.ConfigRegistry;
+import io.amelia.engine.events.EventDispatcher;
+import io.amelia.engine.scripting.ScriptingRegistry;
+import io.amelia.engine.scripting.event.PostEvalEvent;
+import io.amelia.engine.scripting.event.PreEvalEvent;
 import io.amelia.engine.scripting.groovy.GroovyRegistry;
-import io.amelia.engine.scripting.parsers.PreIncludesParserWrapper;
-import io.amelia.engine.scripting.parsers.PreLinksParserWrapper;
+import io.amelia.engine.scripting.lang.ScriptingException;
+import io.amelia.engine.scripting.processing.CoffeeProcessor;
+import io.amelia.engine.scripting.processing.ImageProcessor;
+import io.amelia.engine.scripting.processing.JSMinProcessor;
+import io.amelia.engine.scripting.processing.LessProcessor;
+import io.amelia.engine.scripting.processing.ScriptingProcessor;
+import io.amelia.extra.UtilityEncrypt;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.support.Pair;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
+import io.amelia.engine.events.EventException;
 
 public class ScriptingFactory
 {
-	private static final List<ScriptingRegistry> scripting = new CopyOnWriteArrayList<>();
+	private static List<ScriptingProcessor> processors = new ArrayList<>();
+	private static volatile List<ScriptingRegistry> scripting = new ArrayList<>();
 
 	static
 	{
 		new GroovyRegistry();
 
-		/**
+		/*
 		 * Register Pre-Processors
 		 */
-		register( new PreLinksParserWrapper() );
-		register( new PreIncludesParserWrapper() );
-		if ( ConfigRegistry.CONFIG.getBoolean( "advanced.processors.coffeeProcessorEnabled", true ) )
-			register( new PreCoffeeProcessor() );
-		if ( ConfigRegistry.i().getBoolean( "advanced.processors.lessProcessorEnabled", true ) )
-			register( new PreLessProcessor() );
+		// register( new PreLinksParserWrapper() );
+		// register( new PreIncludesParserWrapper() );
+		if ( ConfigRegistry.config.getValue( Config.PROCESSORS_COFFEE ) )
+			register( new CoffeeProcessor() );
+		if ( ConfigRegistry.config.getValue( Config.PROCESSORS_LESS ) )
+			register( new LessProcessor() );
 		// register( new SassPreProcessor() );
 
-		/**
+		/*
 		 * Register Post-Processors
 		 */
-		if ( ConfigRegistry.i().getBoolean( "advanced.processors.minifierJSProcessorEnabled", true ) )
-			register( new PostJSMinProcessor() );
-		if ( ConfigRegistry.i().getBoolean( "advanced.processors.imageProcessorEnabled", true ) )
-			register( new PostImageProcessor() );
+		if ( ConfigRegistry.config.getValue( Config.PROCESSORS_MINIFY_JS ) )
+			register( new JSMinProcessor() );
+		if ( ConfigRegistry.config.getValue( Config.PROCESSORS_IMAGES ) )
+			register( new ImageProcessor() );
 	}
 
 	// For Web Use
-	public static com.chiorichan.factory.ScriptingFactory create( BindingProvider provider )
+	public static ScriptingFactory create( BindingProvider provider )
 	{
-		return new com.chiorichan.factory.ScriptingFactory( provider.getBinding() );
+		return new ScriptingFactory( provider.getBinding() );
 	}
 
 	// For General Use
-	public static com.chiorichan.factory.ScriptingFactory create( Map<String, Object> rawBinding )
+	public static ScriptingFactory create( Map<String, Object> rawBinding )
 	{
-		return new com.chiorichan.factory.ScriptingFactory( new ScriptBinding( rawBinding ) );
+		return new ScriptingFactory( new ScriptBinding( rawBinding ) );
 	}
 
 	// For General Use
-	public static com.chiorichan.factory.ScriptingFactory create( ScriptBinding binding )
+	public static ScriptingFactory create( ScriptBinding binding )
 	{
-		return new com.chiorichan.factory.ScriptingFactory( binding );
+		return new ScriptingFactory( binding );
 	}
 
-	public static void register( Listener listener )
+	public static void register( ScriptingProcessor scriptingProcessor )
 	{
-		EventDispatcher.i().registerEvents( listener, new RegistrarContext( AppLoader.instances().get( 0 ) ) );
+		if ( !processors.contains( scriptingProcessor ) )
+			processors.add( scriptingProcessor );
 	}
 
 	/**
@@ -83,29 +105,56 @@ public class ScriptingFactory
 			scripting.add( registry );
 	}
 
-	private final Map<ScriptingEngine, List<String>> engines = Maps.newLinkedHashMap();
-
 	private final ScriptBinding binding;
-
 	private final List<Pair<ByteBuf, StackType>> bufferStack = new LinkedList<>();
-
-	private Charset charset = Charsets.toCharset( ConfigRegistry.i().getString( "server.defaultEncoding", "UTF-8" ) );
-
+	private final Map<ScriptingEngine, List<String>> engines = new LinkedHashMap<>();
 	private final ByteBuf output = Unpooled.buffer();
-
 	private final StackFactory stackFactory = new StackFactory();
-
+	private Charset charset = Charset.forName( ConfigRegistry.config.getString( "server.defaultEncoding" ).orElse( "UTF-8" ) );
 	private YieldBuffer yieldBuffer = null;
 
 	private ScriptingFactory( ScriptBinding binding )
 	{
-		Validate.notNull( binding, "The EvalBinding can't be null" );
+		UtilityObjects.notNull( binding, "The ScriptBinding can't be null" );
 		this.binding = binding;
 	}
 
 	public ScriptBinding binding()
 	{
 		return binding;
+	}
+
+	/**
+	 * Returns the output buffer to it's last state
+	 */
+	private void bufferPop( int level )
+	{
+		if ( bufferStack.size() == 0 )
+			throw new IllegalStateException( "Buffer stack is empty." );
+
+		if ( bufferStack.size() - 1 < level )
+			throw new IllegalStateException( "Buffer stack size was too low." );
+
+		// Check for possible forgotten obEnd()'s. Could loop as each detection will move up one next level.
+		if ( bufferStack.size() > level + 1 && bufferStack.get( level + 1 ).getValue() == StackType.OB )
+			obFlush( level + 1 );
+
+		// Determines if the buffer was not push'd or pop'd in the correct order, often indicating outside manipulation of the bufferStack.
+		if ( bufferStack.size() - 1 > level )
+			throw new IllegalStateException( "Buffer stack size was too high." );
+
+		output.clear();
+		output.writeBytes( bufferStack.remove( level ).getKey() );
+	}
+
+	/**
+	 * Stores the current output buffer for the stacked capture
+	 */
+	private int bufferPush( StackType type )
+	{
+		bufferStack.add( new Pair<>( output.copy(), type ) );
+		output.clear();
+		return bufferStack.size() - 1;
 	}
 
 	public Charset charset()
@@ -135,61 +184,63 @@ public class ScriptingFactory
 
 	public ScriptingResult eval( ScriptingContext context )
 	{
-		final ScriptingResult result = context.result();
+		final ScriptingResult result = context.getResult();
 
-		context.factory( this );
-		context.charset( charset );
-		context.baseSource( new String( context.readBytes(), charset ) );
-		binding.setVariable( "__FILE__", context.filename() == null ? "<no file>" : context.filename() );
+		context.setScriptingFactory( this );
+		context.setCharset( charset );
+		context.setBaseSource( new String( context.readBytes(), charset ) );
+		binding.setVariable( "__FILE__", context.getFileName() == null ? "<no file>" : context.getFileName() );
 
-		if ( result.hasNonIgnorableExceptions() )
+		if ( result.getExceptionReport().hasSevereExceptions() )
 			return result;
 
 		try
 		{
 			String name;
 			if ( context.isVirtual() )
-				name = "EvalScript" + UtilEncryption.rand( 8 ) + ".chi";
+				name = "EvalScript" + UtilityEncrypt.rand( 8 ) + ".hps";
 			else
 			{
-				String rel = UtilIO.relPath( context.file().getParentFile(), context.site().directory() ).replace( '\\', '.' ).replace( '/', '.' );
-				context.cacheDirectory( new File( context.cacheDirectory(), rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ) );
-				context.scriptPackage( rel.contains( "." ) ? rel.substring( rel.indexOf( "." ) + 1 ) : "" );
-				name = context.file().getName();
+				String rel = UtilityIO.relPath( context.getPath().getParent(), context.getSourceDirectory() ).replace( '\\', '.' ).replace( '/', '.' );
+				context.setCachePath( Paths.get( rel.contains( "." ) ? rel.substring( 0, rel.indexOf( "." ) ) : rel ).resolve( context.getCachePath() ) );
+				context.setScriptPackage( rel.contains( "." ) ? rel.substring( rel.indexOf( "." ) + 1 ) : "" );
+				name = context.getPath().getFileName().toString();
 			}
 
-			context.scriptName( name );
+			context.setScriptName( name );
 			stackFactory.stack( name, context );
 
+			processors.forEach( scriptingProcessor -> scriptingProcessor.transformScriptingContext( context ) );
+			processors.forEach( scriptingProcessor -> scriptingProcessor.preEvaluate( context ) );
+
+			// TODO should evaluations still flow through the events or is that becoming too resource intensive?
 			PreEvalEvent preEvent = new PreEvalEvent( context );
 			try
 			{
-				EventDispatcher.i().callEventWithException( preEvent );
+				EventDispatcher.callEventWithException( preEvent );
 			}
 			catch ( Exception e )
 			{
-				if ( result.handleException( e.getCause() == null ? e : e.getCause(), context ) )
-					return result;
+				result.handleException( e.getCause() == null ? e : e.getCause() );
 			}
 
 			if ( preEvent.isCancelled() )
-				if ( result.handleException( new ScriptingException( ReportingLevel.E_ERROR, "Evaluation was cancelled by an internal event" ), context ) )
-					return result;
+				result.handleException( new ScriptingException.Error( "Script evaluation was cancelled by internal event" ) );
 
 			if ( engines.size() == 0 )
 				compileEngines( context );
 
 			if ( engines.size() > 0 )
 				for ( Entry<ScriptingEngine, List<String>> entry : engines.entrySet() )
-					if ( entry.getValue() == null || entry.getValue().size() == 0 || entry.getValue().contains( context.shell().toLowerCase() ) )
+					if ( entry.getValue() == null || entry.getValue().size() == 0 || entry.getValue().contains( context.getShell().toLowerCase() ) )
 					{
 						int level = bufferPush( StackType.SCRIPT );
 						try
 						{
 							// Determine if data was written to the context during the eval(). Indicating data was either written directly or a sub-eval was called.
-							String hash = context.bufferHash();
+							String hash = context.getBufferHash();
 							entry.getKey().eval( context );
-							if ( context.bufferHash().equals( hash ) )
+							if ( context.getBufferHash().equals( hash ) )
 								context.resetAndWrite( output );
 							else
 								context.write( output );
@@ -197,9 +248,7 @@ public class ScriptingFactory
 						}
 						catch ( Throwable cause )
 						{
-							// On return true, it was a severe problem and the execution should be stopped.
-							if ( result.handleException( cause, context ) )
-								return result;
+							result.handleException( cause );
 						}
 						finally
 						{
@@ -207,86 +256,29 @@ public class ScriptingFactory
 						}
 					}
 
+			processors.forEach( scriptingProcessor -> scriptingProcessor.postEvaluate( context ) );
+
 			PostEvalEvent postEvent = new PostEvalEvent( context );
 			try
 			{
-				EventDispatcher.i().callEventWithException( postEvent );
+				EventDispatcher.callEventWithException( postEvent );
 			}
-			catch ( EventException e )
+			catch ( EventException.Error e )
 			{
-				if ( result.handleException( e.getCause() == null ? e : e.getCause(), context ) )
-					return result;
+				result.handleException( e.getCause() == null ? e : e.getCause() );
 			}
 		}
+		/* catch ( EvalSevereError e )
+		{
+			// Evaluation has aborted and we return the ScriptingResult AS-IS.
+			return result.setFailure();
+		}*/
 		finally
 		{
 			stackFactory.unstack();
 		}
 
-		return result.success( true );
-	}
-
-	private enum StackType
-	{
-		SCRIPT, // Indicates script output stack
-		OB // Indicates output buffer stack
-	}
-
-	/**
-	 * Stores the current output buffer for the stacked capture
-	 */
-	private int bufferPush( StackType type )
-	{
-		bufferStack.add( new Pair<>( output.copy(), type ) );
-		output.clear();
-		return bufferStack.size() - 1;
-	}
-
-	/**
-	 * Returns the output buffer to it's last state
-	 */
-	private void bufferPop( int level )
-	{
-		if ( bufferStack.size() == 0 )
-			throw new IllegalStateException( "Buffer stack is empty." );
-
-		if ( bufferStack.size() - 1 < level )
-			throw new IllegalStateException( "Buffer stack size was too low." );
-
-		// Check for possible forgotten obEnd()'s. Could loop as each detection will move up one next level.
-		if ( bufferStack.size() > level + 1 && bufferStack.get( level + 1 ).getValue() == StackType.OB )
-			obFlush( level + 1 );
-
-		// Determines if the buffer was not push'd or pop'd in the correct order, often indicating outside manipulation of the bufferStack.
-		if ( bufferStack.size() - 1 > level )
-			throw new IllegalStateException( "Buffer stack size was too high." );
-
-		output.clear();
-		output.writeBytes( bufferStack.remove( level ).getKey() );
-	}
-
-	public int obStart()
-	{
-		return bufferPush( StackType.OB );
-	}
-
-	public void obFlush( int stackLevel )
-	{
-		// Forward the output buffer content into the last buffer
-		String content = obEnd( stackLevel );
-		print( content );
-	}
-
-	public String obEnd( int stackLevel )
-	{
-		if ( bufferStack.get( stackLevel ).getValue() != StackType.OB )
-			throw new IllegalStateException( "The stack level was not an Output Buffer." );
-
-		String content = output.toString( charset );
-
-		bufferPop( stackLevel );
-
-		return content;
+		return result.setSuccess();
 	}
 
 	public Charset getCharset()
@@ -301,7 +293,7 @@ public class ScriptingFactory
 		if ( scriptTrace.size() < 1 )
 			return "<unknown>";
 
-		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).context().filename();
+		String fileName = scriptTrace.get( scriptTrace.size() - 1 ).context().getFileName();
 
 		if ( fileName == null || fileName.isEmpty() )
 			return "<unknown>";
@@ -334,6 +326,42 @@ public class ScriptingFactory
 		return stackFactory.examineStackTrace( Thread.currentThread().getStackTrace() );
 	}
 
+	public StackFactory getStack()
+	{
+		return stackFactory;
+	}
+
+	public YieldBuffer getYieldBuffer()
+	{
+		if ( yieldBuffer == null )
+			yieldBuffer = new YieldBuffer();
+		return yieldBuffer;
+	}
+
+	public String obEnd( int stackLevel )
+	{
+		if ( bufferStack.get( stackLevel ).getValue() != StackType.OB )
+			throw new IllegalStateException( "The stack level was not an Output Buffer." );
+
+		String content = output.toString( charset );
+
+		bufferPop( stackLevel );
+
+		return content;
+	}
+
+	public void obFlush( int stackLevel )
+	{
+		// Forward the output buffer content into the last buffer
+		String content = obEnd( stackLevel );
+		print( content );
+	}
+
+	public int obStart()
+	{
+		return bufferPush( StackType.OB );
+	}
+
 	/**
 	 * Gives externals subroutines access to the current output stream via print()
 	 *
@@ -364,15 +392,22 @@ public class ScriptingFactory
 		binding.setVariable( key, val );
 	}
 
-	public StackFactory stack()
+	private enum StackType
 	{
-		return stackFactory;
+		SCRIPT,
+		// Indicates script output stack
+		OB // Indicates output buffer stack
 	}
 
-	public YieldBuffer getYieldBuffer()
+	public static class Config
 	{
-		if ( yieldBuffer == null )
-			yieldBuffer = new YieldBuffer();
-		return yieldBuffer;
+		public static final TypeBase SCRIPTING_BASE = new TypeBase( "scripting" );
+		public static final TypeBase PROCESSORS_BASE = new TypeBase( SCRIPTING_BASE, "processors" );
+		public static final TypeBase.TypeBoolean PROCESSORS_COFFEE = new TypeBase.TypeBoolean( PROCESSORS_BASE, "coffeeEnabled", true );
+		public static final TypeBase.TypeBoolean PROCESSORS_LESS = new TypeBase.TypeBoolean( PROCESSORS_BASE, "lessEnabled", true );
+		public static final TypeBase.TypeBoolean PROCESSORS_MINIFY_JS = new TypeBase.TypeBoolean( PROCESSORS_BASE, "minifyJSEnabled", true );
+		public static final TypeBase.TypeBoolean PROCESSORS_IMAGES = new TypeBase.TypeBoolean( PROCESSORS_BASE, "imagesEnabled", true );
+		public static final TypeBase.TypeBoolean PROCESSORS_IMAGES_CACHE = new TypeBase.TypeBoolean( PROCESSORS_BASE, "imagesCacheEnabled", true );
+		public static final TypeBase.TypeStringList PREFERRED_EXTENSIONS = new TypeBase.TypeStringList( SCRIPTING_BASE, "preferredExtensions", Arrays.asList( "html", "htm", "groovy", "gsp", "jsp" ) );
 	}
 }

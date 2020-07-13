@@ -119,6 +119,7 @@ public enum ReportingLevel
 
 		return levels.toArray( new ReportingLevel[0] );
 	}
+
 	final boolean ignorable;
 	final int level;
 

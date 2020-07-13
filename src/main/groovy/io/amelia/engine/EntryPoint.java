@@ -1,7 +1,5 @@
 package io.amelia.engine;
 
-import io.amelia.engine.subsystem.EngineApplication;
-import io.amelia.engine.subsystem.EngineCore;
 import io.amelia.lang.ApplicationException;
 
 public class EntryPoint

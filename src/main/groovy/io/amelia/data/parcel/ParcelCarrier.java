@@ -145,6 +145,18 @@ public class ParcelCarrier
 		return code;
 	}
 
+	public void setCode( ResultCode code )
+	{
+		this.code = code.getCode();
+	}
+
+	public void setCode( int code )
+	{
+		if ( ResultCode.isReserved( code ) )
+			throw new ParcelException.Runtime( "The specified code is reserved, as it belongs to the ResultCode enum. Use another code or use the enum instead." );
+		this.code = code;
+	}
+
 	public Object getPayloadObject()
 	{
 		return payloadObject;
@@ -160,14 +172,32 @@ public class ParcelCarrier
 		return tag;
 	}
 
+	public void setTag( @Nullable String tag )
+	{
+		notFinalized();
+		this.tag = tag;
+	}
+
 	public ParcelChannel getTargetChannel()
 	{
 		return targetChannel;
 	}
 
+	public void setTargetChannel( ParcelChannel targetChannel )
+	{
+		notFinalized();
+		this.targetChannel = targetChannel;
+	}
+
 	public ParcelReceiver getTargetReceiver()
 	{
 		return targetReceiver;
+	}
+
+	public void setTargetReceiver( ParcelReceiver targetReceiver )
+	{
+		notFinalized();
+		this.targetReceiver = targetReceiver;
 	}
 
 	/**
@@ -195,7 +225,7 @@ public class ParcelCarrier
 	public void notFinalized()
 	{
 		if ( finalized )
-			throw ParcelException.runtime( "Parcel can't be modified once finalized." );
+			throw new ParcelException.Runtime( "Parcel can't be modified once finalized." );
 	}
 
 	public void recycle()
@@ -219,18 +249,6 @@ public class ParcelCarrier
 
 			unusedPool.add( this );
 		}
-	}
-
-	public void setCode( ResultCode code )
-	{
-		this.code = code.getCode();
-	}
-
-	public void setCode( int code )
-	{
-		if ( ResultCode.isReserved( code ) )
-			throw ParcelException.runtime( "The specified code is reserved, as it belongs to the ResultCode enum. Use another code or use the enum instead." );
-		this.code = code;
 	}
 
 	public void setOrigin( ParcelSender origin )
@@ -261,24 +279,6 @@ public class ParcelCarrier
 			this.payloadParcel = null;
 			this.payloadObject = payload;
 		}
-	}
-
-	public void setTag( @Nullable String tag )
-	{
-		notFinalized();
-		this.tag = tag;
-	}
-
-	public void setTargetChannel( ParcelChannel targetChannel )
-	{
-		notFinalized();
-		this.targetChannel = targetChannel;
-	}
-
-	public void setTargetReceiver( ParcelReceiver targetReceiver )
-	{
-		notFinalized();
-		this.targetReceiver = targetReceiver;
 	}
 
 	/**

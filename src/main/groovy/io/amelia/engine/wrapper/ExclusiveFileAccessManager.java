@@ -1,30 +1,19 @@
 package io.amelia.engine.wrapper;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.RandomAccessFile;
+import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.Callable;
+
+import io.amelia.extra.UtilityIO;
 
 public class ExclusiveFileAccessManager
 {
 	public static final String LOCK_FILE_SUFFIX = ".lck";
 
-	private static void maybeCloseQuietly( Closeable closeable )
-	{
-		if ( closeable != null )
-		{
-			try
-			{
-				closeable.close();
-			}
-			catch ( Exception ignore )
-			{
-				//
-			}
-		}
-	}
 	private final int pollIntervalMs;
 	private final int timeoutMs;
 
@@ -34,15 +23,19 @@ public class ExclusiveFileAccessManager
 		this.pollIntervalMs = pollIntervalMs;
 	}
 
-	public <T> T access( File exclusiveFile, Callable<T> task ) throws Exception
+	public <T> T access( Path exclusiveFile, Callable<T> task ) throws Exception
 	{
-		final File lockFile = new File( exclusiveFile.getParentFile(), exclusiveFile.getName() + LOCK_FILE_SUFFIX );
-		File lockFileDirectory = lockFile.getParentFile();
-		if ( !lockFileDirectory.mkdirs() && ( !lockFileDirectory.exists() || !lockFileDirectory.isDirectory() ) )
+		final Path lockFile = exclusiveFile.getParent().resolve( exclusiveFile.getFileName() + LOCK_FILE_SUFFIX );
+		Path lockFileDirectory = lockFile.getParent();
+		try
 		{
-			throw new RuntimeException( "Could not create parent directory for lock file " + lockFile.getAbsolutePath() );
+			Files.createDirectories( lockFileDirectory );
 		}
-		RandomAccessFile randomAccessFile = null;
+		catch ( IOException e )
+		{
+			throw new RuntimeException( "Could not create parent directory for lock file " + UtilityIO.relPath( lockFile ) );
+		}
+
 		FileChannel channel = null;
 		try
 		{
@@ -52,21 +45,19 @@ public class ExclusiveFileAccessManager
 
 			while ( lock == null && getTimeMillis() < expiry )
 			{
-				randomAccessFile = new RandomAccessFile( lockFile, "rw" );
-				channel = randomAccessFile.getChannel();
+				channel = FileChannel.open( lockFile, StandardOpenOption.READ, StandardOpenOption.WRITE );
 				lock = channel.tryLock();
 
 				if ( lock == null )
 				{
-					maybeCloseQuietly( channel );
-					maybeCloseQuietly( randomAccessFile );
+					UtilityIO.closeQuietly( channel );
 					Thread.sleep( pollIntervalMs );
 				}
 			}
 
 			if ( lock == null )
 			{
-				throw new RuntimeException( "Timeout of " + timeoutMs + " reached waiting for exclusive access to file: " + exclusiveFile.getAbsolutePath() );
+				throw new RuntimeException( "Timeout of " + timeoutMs + " reached waiting for exclusive access to file: " + UtilityIO.relPath( exclusiveFile ) );
 			}
 
 			try
@@ -77,16 +68,13 @@ public class ExclusiveFileAccessManager
 			{
 				lock.release();
 
-				maybeCloseQuietly( channel );
+				UtilityIO.closeQuietly( channel );
 				channel = null;
-				maybeCloseQuietly( randomAccessFile );
-				randomAccessFile = null;
 			}
 		}
 		finally
 		{
-			maybeCloseQuietly( channel );
-			maybeCloseQuietly( randomAccessFile );
+			UtilityIO.closeQuietly( channel );
 		}
 	}
 

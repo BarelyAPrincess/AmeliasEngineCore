@@ -73,20 +73,19 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class GroovyRegistry implements ScriptingRegistry
 {
+	private static final Class<?>[] classImports = new Class<?>[] {References.class, NestedScript.class, ServerLoader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventDispatcher.class, PermissionDispatcher.class, PluginManager.class, TaskManager.class, Ticks.class, Timings.class, SessionModule.class, SiteModule.class, Site.class, ScriptingContext.class, Versioning.class};
 	/*
 	 * Groovy Imports :P
 	 */
 	private static final GroovyImportCustomizer imports = new GroovyImportCustomizer();
-
-	private static final Class<?>[] classImports = new Class<?>[] {References.class, NestedScript.class, ServerLoader.class, AccountManager.class, AccountType.class, Account.class, AccountAuthenticator.class, EventDispatcher.class, PermissionDispatcher.class, PluginManager.class, TaskManager.class, Ticks.class, Timings.class, SessionModule.class, SiteModule.class, Site.class, ScriptingContext.class, Versioning.class};
+	private static final GroovySandbox secure = new GroovySandbox();
 	private static final String[] starImports = new String[] {"com.chiorichan.lang", "com.chiorichan.helpers", "com.chiorichan.factory.api", "com.chiorichan.utils", "com.chiorichan.logger", "org.apache.commons.lang3.text", "org.ocpsoft.prettytime", "java.utils", "java.net", "com.google.common.base"};
 	private static final Class<?>[] staticImports = new Class<?>[] {Looper.class, ReportingLevel.class, HttpResponseStatus.class};
-	private static final GroovySandbox secure = new GroovySandbox();
-
 	/*
 	 * Groovy Sandbox Customization
 	 */
 	private static final ASTTransformationCustomizer timedInterrupt = new ASTTransformationCustomizer( TimedInterrupt.class );
+	private static Map<String, String> scriptCacheMd5 = new HashMap<>();
 
 	static
 	{
@@ -95,7 +94,7 @@ public class GroovyRegistry implements ScriptingRegistry
 		imports.addStaticStars( staticImports );
 
 		// Transforms scripts to limit their execution to 30 seconds.
-		long timeout = ConfigRegistry.i().getLong( "advanced.security.defaultScriptTimeout", 30L );
+		long timeout = ConfigRegistry.config.getLong( "advanced.security.defaultScriptTimeout", 30L );
 		if ( timeout > 0 )
 		{
 			Map<String, Object> timedInterruptParams = Maps.newHashMap();
@@ -103,8 +102,6 @@ public class GroovyRegistry implements ScriptingRegistry
 			timedInterrupt.setAnnotationParameters( timedInterruptParams );
 		}
 	}
-
-	private static Map<String, String> scriptCacheMd5 = new HashMap<>();
 
 	public static Script getCachedScript( ScriptingContext context, Binding binding )
 	{

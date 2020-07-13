@@ -9,8 +9,6 @@
  */
 package io.amelia.engine.scripting;
 
-import com.chiorichan.utils.UtilObjects;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,167 +16,47 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import io.amelia.extra.UtilityObjects;
+
 public class TableBuilder
 {
-	public class Row
-	{
-		private Map<String, List<String>> arguments = new TreeMap<>();
-		private Map<String, Object> content = new TreeMap<>();
-
-		Row( String text )
-		{
-			content.put( "0-text", text );
-		}
-
-		Row( Map<String, String> row )
-		{
-			for ( Map.Entry<String, String> e : row.entrySet() )
-				if ( e.getKey().startsWith( ":" ) )
-					addArgument( e.getKey().substring( 1 ), e.getValue() );
-				else
-					content.put( e.getKey(), e.getValue() );
-		}
-
-		public Row removeArgument( String key )
-		{
-			arguments.remove( key );
-			return this;
-		}
-
-		public Row setArgument( String key, List<String> cls )
-		{
-			arguments.compute( key, ( k, v ) -> new ArrayList<>() ).addAll( cls );
-			return this;
-		}
-
-		public Row setArgument( String key, String cls )
-		{
-			arguments.compute( key, ( k, v ) -> new ArrayList<>() ).add( cls );
-			return this;
-		}
-
-		public Row addArgument( String key, List<String> cls )
-		{
-			arguments.compute( key, ( k, v ) -> v == null ? new ArrayList<>() : v ).addAll( cls );
-			return this;
-		}
-
-		public Row addArgument( String key, String cls )
-		{
-			arguments.compute( key, ( k, v ) -> v == null ? new ArrayList<>() : v ).add( cls );
-			return this;
-		}
-
-		public String render( int rowInx, int colLength )
-		{
-			StringBuilder sb = new StringBuilder();
-
-			Map<String, List<String>> arguments = new TreeMap<>( this.arguments );
-
-			arguments.compute( "class", ( k, v ) -> v == null ? new ArrayList<>() : v ).add( rowInx % 2 == 0 ? "evenrowcolor" : "oddrowcolor" );
-
-			sb.append( "<tr" );
-			for ( Map.Entry<String, List<String>> e : arguments.entrySet() )
-				sb.append( " " ).append( e.getKey() ).append( "=\"" ).append( e.getValue().stream().collect( Collectors.joining( " " ) ) ).append( "\"" );
-			sb.append( ">\n" );
-
-			if ( content.size() == 1 )
-				sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"\" colspan=\"" ).append( colLength ).append( "\">" ).append( content.values().toArray()[0] ).append( "</td>\n" );
-			else
-			{
-				AtomicInteger colInx = new AtomicInteger();
-				for ( Object col : content.values() )
-					sb.append( "<td id=\"col_" ).append( colInx.getAndIncrement() ).append( "\">" ).append( UtilObjects.castToString( col ) ).append( "</td>\n" );
-			}
-
-			sb.append( "</tr>\n" );
-
-			return sb.toString();
-		}
-
-		public int colCount()
-		{
-			return content.size();
-		}
-
-	}
-
 	Map<String, List<String>> arguments = new TreeMap<>();
-
+	private String defText = null;
 	private AtomicInteger inx = new AtomicInteger();
 	private Map<Integer, Row> rows = new TreeMap<>();
 	private List<String> tableHeader = new ArrayList<>();
-	private String defText = null;
-
 	public TableBuilder()
 	{
 		addArgument( "class", "altrowstable" );
 	}
 
-	public com.chiorichan.factory.TableBuilder addHeader( List<String> headers )
-	{
-		tableHeader.addAll( headers );
-		return this;
-	}
-
-	public com.chiorichan.factory.TableBuilder addHeader( String header )
-	{
-		tableHeader.add( header );
-		return this;
-	}
-
-	public com.chiorichan.factory.TableBuilder removeArgument( String key )
-	{
-		arguments.remove( key );
-		return this;
-	}
-
-	public com.chiorichan.factory.TableBuilder setArgument( String key, List<String> cls )
-	{
-		arguments.compute( key, ( k, v ) -> new ArrayList<>() ).addAll( cls );
-		return this;
-	}
-
-	public com.chiorichan.factory.TableBuilder setArgument( String key, String cls )
-	{
-		arguments.compute( key, ( k, v ) -> new ArrayList<>() ).add( cls );
-		return this;
-	}
-
-	public com.chiorichan.factory.TableBuilder addArgument( String key, List<String> cls )
+	public TableBuilder addArgument( String key, List<String> cls )
 	{
 		arguments.compute( key, ( k, v ) -> v == null ? new ArrayList<>() : v ).addAll( cls );
 		return this;
 	}
 
-	public com.chiorichan.factory.TableBuilder addArgument( String key, String cls )
+	public TableBuilder addArgument( String key, String cls )
 	{
 		arguments.compute( key, ( k, v ) -> v == null ? new ArrayList<>() : v ).add( cls );
 		return this;
 	}
 
-	public Row row( String text )
+	public TableBuilder addHeader( List<String> headers )
 	{
-		Row row = new Row( text );
-		rows.put( inx.getAndIncrement(), row );
-		return row;
+		tableHeader.addAll( headers );
+		return this;
 	}
 
-	public Row row( Map<String, String> map )
+	public TableBuilder addHeader( String header )
 	{
-		Row row = new Row( map );
-		rows.put( inx.getAndIncrement(), row );
-		return row;
+		tableHeader.add( header );
+		return this;
 	}
 
-	public int rowCount()
+	public TableBuilder removeArgument( String key )
 	{
-		return rows.size();
-	}
-
-	public com.chiorichan.factory.TableBuilder setDefault( String defText )
-	{
-		this.defText = defText;
+		arguments.remove( key );
 		return this;
 	}
 
@@ -214,5 +92,125 @@ public class TableBuilder
 		sb.append( "</tbody>\n" ).append( "</getTable>\n" );
 
 		return sb.toString();
+	}
+
+	public Row row( String text )
+	{
+		Row row = new Row( text );
+		rows.put( inx.getAndIncrement(), row );
+		return row;
+	}
+
+	public Row row( Map<String, String> map )
+	{
+		Row row = new Row( map );
+		rows.put( inx.getAndIncrement(), row );
+		return row;
+	}
+
+	public int rowCount()
+	{
+		return rows.size();
+	}
+
+	public TableBuilder setArgument( String key, List<String> cls )
+	{
+		arguments.compute( key, ( k, v ) -> new ArrayList<>() ).addAll( cls );
+		return this;
+	}
+
+	public TableBuilder setArgument( String key, String cls )
+	{
+		arguments.compute( key, ( k, v ) -> new ArrayList<>() ).add( cls );
+		return this;
+	}
+
+	public TableBuilder setDefault( String defText )
+	{
+		this.defText = defText;
+		return this;
+	}
+
+	public class Row
+	{
+		private Map<String, List<String>> arguments = new TreeMap<>();
+		private Map<String, Object> content = new TreeMap<>();
+
+		Row( String text )
+		{
+			content.put( "0-text", text );
+		}
+
+		Row( Map<String, String> row )
+		{
+			for ( Map.Entry<String, String> e : row.entrySet() )
+				if ( e.getKey().startsWith( ":" ) )
+					addArgument( e.getKey().substring( 1 ), e.getValue() );
+				else
+					content.put( e.getKey(), e.getValue() );
+		}
+
+		public Row addArgument( String key, List<String> cls )
+		{
+			arguments.compute( key, ( k, v ) -> v == null ? new ArrayList<>() : v ).addAll( cls );
+			return this;
+		}
+
+		public Row addArgument( String key, String cls )
+		{
+			arguments.compute( key, ( k, v ) -> v == null ? new ArrayList<>() : v ).add( cls );
+			return this;
+		}
+
+		public int colCount()
+		{
+			return content.size();
+		}
+
+		public Row removeArgument( String key )
+		{
+			arguments.remove( key );
+			return this;
+		}
+
+		public String render( int rowInx, int colLength )
+		{
+			StringBuilder sb = new StringBuilder();
+
+			Map<String, List<String>> arguments = new TreeMap<>( this.arguments );
+
+			arguments.compute( "class", ( k, v ) -> v == null ? new ArrayList<>() : v ).add( rowInx % 2 == 0 ? "evenrowcolor" : "oddrowcolor" );
+
+			sb.append( "<tr" );
+			for ( Map.Entry<String, List<String>> e : arguments.entrySet() )
+				sb.append( " " ).append( e.getKey() ).append( "=\"" ).append( e.getValue().stream().collect( Collectors.joining( " " ) ) ).append( "\"" );
+			sb.append( ">\n" );
+
+			if ( content.size() == 1 )
+				sb.append( "<td style=\"text-align: center; font-weight: bold;\" class=\"\" colspan=\"" ).append( colLength ).append( "\">" ).append( content.values().toArray()[0] ).append( "</td>\n" );
+			else
+			{
+				AtomicInteger colInx = new AtomicInteger();
+				for ( Object col : content.values() )
+					sb.append( "<td id=\"col_" ).append( colInx.getAndIncrement() ).append( "\">" ).append( UtilityObjects.castToString( col ) ).append( "</td>\n" );
+			}
+
+			sb.append( "</tr>\n" );
+
+			return sb.toString();
+		}
+
+		public Row setArgument( String key, List<String> cls )
+		{
+			arguments.compute( key, ( k, v ) -> new ArrayList<>() ).addAll( cls );
+			return this;
+		}
+
+		public Row setArgument( String key, String cls )
+		{
+			arguments.compute( key, ( k, v ) -> new ArrayList<>() ).add( cls );
+			return this;
+		}
+
 	}
 }

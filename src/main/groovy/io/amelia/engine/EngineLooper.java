@@ -10,14 +10,18 @@
 package io.amelia.engine;
 
 import io.amelia.data.parcel.ParcelReceiver;
-import io.amelia.engine.subsystem.EngineCore;
-import io.amelia.engine.subsystem.looper.MainLooper;
-import io.amelia.engine.subsystem.looper.queue.EntryAbstract;
+import io.amelia.engine.looper.MainLooper;
+import io.amelia.engine.looper.queue.EntryAbstract;
 import io.amelia.lang.ApplicationException;
 import io.amelia.support.Runlevel;
 
 public class EngineLooper extends MainLooper
 {
+	protected boolean canQuit()
+	{
+		return EngineCore.getRunlevel().intValue() <= 100;
+	}
+
 	@Override
 	public ParcelReceiver getParcelReceiver()
 	{
@@ -33,15 +37,10 @@ public class EngineLooper extends MainLooper
 	public boolean isPermitted( EntryAbstract entry )
 	{
 		if ( EngineCore.getRunlevel().intValue() < Runlevel.MAINLOOP.intValue() && entry instanceof TaskEntry )
-			throw new ApplicationException.Runtime( entry.getClass().getSimpleName() + " can only be posted to the FoundationLooper at runlevel MAINLOOP and above. Current runlevel is " + Foundation.getRunlevel() );
+			throw new ApplicationException.Runtime( entry.getClass().getSimpleName() + " can only be posted to the FoundationLooper at runlevel MAINLOOP and above. Current runlevel is " + EngineCore.getRunlevel() );
 
 		// TODO Check known built-in AbstractEntry sub-classes.
 		return true;
-	}
-
-	protected boolean canQuit()
-	{
-		return EngineCore.getRunlevel().intValue() <= 100;
 	}
 
 	@Override

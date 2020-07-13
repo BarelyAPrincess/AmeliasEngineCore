@@ -166,6 +166,11 @@ public class UtilityEncrypt
 		return md5Hex( uuid( seed ) );
 	}
 
+	public static boolean isUuidValid( String uuid )
+	{
+		return UUID_PATTERN.matcher( uuid ).matches();
+	}
+
 	public static byte[] md5( byte[] bytes )
 	{
 		return getDigest( MD5 ).digest( bytes );
@@ -418,11 +423,6 @@ public class UtilityEncrypt
 		}
 
 		return UUID.nameUUIDFromBytes( bytes.toByteArray() ).toString();
-	}
-
-	public static boolean isUuidValid( String uuid )
-	{
-		return UUID_PATTERN.matcher( uuid ).matches();
 	}
 
 	private UtilityEncrypt()

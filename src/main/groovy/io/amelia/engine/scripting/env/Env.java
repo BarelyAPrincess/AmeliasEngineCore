@@ -9,15 +9,13 @@
  */
 package io.amelia.engine.scripting.env;
 
-import com.chiorichan.utils.UtilIO;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
-import io.amelia.logging.LogBuilder;
+import io.amelia.extra.UtilityIO;
 
 public class Env
 {
@@ -41,7 +39,7 @@ public class Env
 		File gitIgnore = new File( file.getAbsoluteFile().getParentFile(), ".gitignore" );
 		if ( gitIgnore.exists() )
 		{
-			List<String> gitIgnoreContents = UtilIO.readFileToLines( gitIgnore );
+			List<String> gitIgnoreContents = UtilityIO.readFileToLines( gitIgnore );
 			boolean gitIgnored = false;
 
 			// TODO Tweak for better detection of .gitignore contents
@@ -50,7 +48,7 @@ public class Env
 					gitIgnored = true;
 
 			if ( !gitIgnored )
-				LogBuilder.get().warning( String.format( "The environment file [%s] is not present in the [.gitignore] file, it's recommended you do so for security reasons.", UtilIO.relPath( file ) ) );
+				L.warning( String.format( "The environment file [%s] is not present in the [.gitignore] file, it's recommended you do so for security reasons.", UtilityIO.relPath( file ) ) );
 		}
 	}
 

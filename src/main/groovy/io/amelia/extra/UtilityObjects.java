@@ -770,7 +770,7 @@ public class UtilityObjects
 		}
 		catch ( NoSuchMethodException | IllegalAccessException | InvocationTargetException e )
 		{
-			throw new RuntimeException( "There was a problem with Objs#invokeMethod.", e );
+			throw new RuntimeException( "There was a problem with UtilityObjects#invokeMethod.", e );
 		}
 	}
 
@@ -815,7 +815,7 @@ public class UtilityObjects
 		}
 		catch ( NoSuchMethodException | IllegalAccessException | InvocationTargetException e )
 		{
-			throw new RuntimeException( "There was a problem with Objs#invokeStaticMethod. There might be a compatibility issue with your JDK, please report this error to the developer.", e );
+			throw new RuntimeException( "There was a problem with UtilityObjects#invokeStaticMethod. There might be a compatibility issue with your JDK, please report this error to the developer.", e );
 		}
 	}
 
@@ -827,7 +827,7 @@ public class UtilityObjects
 		}
 		catch ( ClassNotFoundException e )
 		{
-			throw new RuntimeException( "There was a problem with Objs#invokeStaticMethod. There might be a compatibility issue with your JDK, please report this error to the developer.", e );
+			throw new RuntimeException( "There was a problem with UtilityObjects#invokeStaticMethod. There might be a compatibility issue with your JDK, please report this error to the developer.", e );
 		}
 	}
 

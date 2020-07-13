@@ -30,7 +30,7 @@ import io.amelia.logging.LogBuilder;
 
 public class PreLessProcessor implements Listener
 {
-	@EventHandler( )
+	@EventHandler()
 	public void onEvent( PreEvalEvent event )
 	{
 		if ( !event.context().contentType().equals( "stylesheet/less" ) || !event.context().shell().equals( "less" ) )
@@ -90,7 +90,7 @@ public class PreLessProcessor implements Listener
 				if ( globalScope.get( "source" ) != null && globalScope.get( "source" ) instanceof String )
 					event.context().resetAndWrite( ( String ) globalScope.get( "source" ) );
 				else if ( globalScope.get( "source" ) != null )
-					LogBuilder.get().warning( "We did not get what we expected back from Less.js: " + globalScope.get( "source" ) );
+					L.warning( "We did not get what we expected back from Less.js: " + globalScope.get( "source" ) );
 			}
 			finally
 			{

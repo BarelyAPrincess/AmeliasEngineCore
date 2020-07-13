@@ -9,6 +9,7 @@
  */
 package io.amelia.lang;
 
+import java.awt.image.Kernel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,9 +24,12 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import io.amelia.foundation.Kernel;
+import io.amelia.engine.EngineCore;
+import io.amelia.engine.log.EngineLogRegistry;
 import io.amelia.extra.UtilityExceptions;
 import io.amelia.extra.UtilityStrings;
+
+import io.amelia.engine.log.EngineLogger;
 
 /**
  * This class is used to analyze and report exceptions
@@ -49,10 +53,11 @@ public final class ExceptionReport
 		report.handleException( cause );
 		if ( report.getExceptionCount() == 0 )
 			return;
-		report.printToLog( Kernel.L );
-		ExceptionRegistrar exceptionRegistrar = Kernel.getExceptionRegistrar();
+		report.printToLog( EngineLogRegistry.GLOBAL );
+		EngineCore.getApplication().fatalError( report, crashOnSevere );
+		/*ExceptionRegistrar exceptionRegistrar = Kernel.getExceptionRegistrar();
 		if ( report.hasErrored() && exceptionRegistrar != null )
-			exceptionRegistrar.fatalError( report, crashOnSevere );
+			exceptionRegistrar.fatalError( report, crashOnSevere );*/
 	}
 
 	/**
@@ -70,6 +75,7 @@ public final class ExceptionReport
 
 	protected final List<ExceptionContext> exceptionContexts = new ArrayList<>();
 	private boolean hasErrored = false;
+	private boolean wasHandleExceptionCalled;
 
 	public ExceptionReport addException( ExceptionContext exception )
 	{
@@ -134,8 +140,6 @@ public final class ExceptionReport
 		handleException( cause, null );
 	}
 
-	private boolean wasHandleExceptionCalled;
-
 	/**
 	 * Processes and appends the throwable to the context provided.
 	 *
@@ -158,7 +162,7 @@ public final class ExceptionReport
 			if ( reportingLevel != null )
 			{
 				if ( !wasHandleExceptionCalled )
-					Kernel.L.info( "ExceptionContext#handle() did appear to properly handle, so we'll print a stacktrace for some extra assistance.\n" + UtilityExceptions.getStackTrace( cause ) );
+					L.info( "ExceptionContext#handle() did appear to properly handle, so we'll print a stacktrace for some extra assistance.\n" + UtilityExceptions.getStackTrace( cause ) );
 
 				hasErrored = !reportingLevel.isIgnorable();
 				return;
@@ -281,7 +285,7 @@ public final class ExceptionReport
 		return getSevereExceptions().count() > 0;
 	}
 
-	public void printIgnorableToLog( Kernel.Logger logger )
+	public void printIgnorableToLog( EngineLogger logger )
 	{
 		UtilityStrings.split( printIgnorableToString(), "\n" ).forEach( line -> logger.warning( line ) );
 	}
@@ -301,7 +305,7 @@ public final class ExceptionReport
 		return builder.append( "\n" ).toString();
 	}
 
-	public void printSevereToLog( Kernel.Logger logger )
+	public void printSevereToLog( EngineLogger logger )
 	{
 		UtilityStrings.split( printSevereToString(), "\n" ).forEach( line -> logger.severe( line ) );
 	}
@@ -321,7 +325,7 @@ public final class ExceptionReport
 		return builder.append( "\n" ).toString();
 	}
 
-	public void printToLog( Kernel.Logger logger )
+	public void printToLog( EngineLogger logger )
 	{
 		printIgnorableToLog( logger );
 		printSevereToLog( logger );

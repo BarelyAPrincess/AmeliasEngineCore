@@ -123,7 +123,7 @@ abstract class ScriptingBaseHttp extends Builtin
 		Account result = AccountManager.i().getAccount( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
 
 		// if ( result == null )
-			// result = AccountManager.instance().getAccountPartial( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
+		// result = AccountManager.instance().getAccountPartial( hasLogin() ? getAccount().getLocation().getId() : getSite().getId(), uid )
 
 		return result
 	}

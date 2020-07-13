@@ -9,7 +9,7 @@
  */
 package io.amelia.lang;
 
-import io.amelia.engine.subsystem.ConfigData;
+import io.amelia.engine.config.ConfigData;
 
 public class ConfigException
 {

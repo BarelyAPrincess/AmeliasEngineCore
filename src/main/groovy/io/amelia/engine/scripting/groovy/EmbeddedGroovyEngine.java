@@ -54,7 +54,7 @@ public class EmbeddedGroovyEngine implements ScriptingEngine
 		MARKERS.add( new Triplet<>( "{!!", "print", "!!}" ) );
 		MARKERS.add( new Triplet<>( "{{--", "comment", "--}}" ) );
 
-		if ( ConfigRegistry.i().getBoolean( "advanced.scripting.gspAllowPhpTags" ) )
+		if ( ConfigRegistry.config.getBoolean( "advanced.scripting.gspAllowPhpTags" ) )
 		{
 			MARKERS.add( new Triplet<>( "<?", null, "?>" ) );
 			MARKERS.add( new Triplet<>( "<?=", "echo", "?>" ) );

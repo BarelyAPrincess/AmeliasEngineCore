@@ -33,6 +33,8 @@ public abstract class BasicParser
 		p2 = Pattern.compile( patternTwo );
 	}
 
+	public abstract String resolveMethod( String... args ) throws Exception;
+
 	public String runParser( String source ) throws Exception
 	{
 		if ( source == null || source.isEmpty() )
@@ -65,6 +67,4 @@ public abstract class BasicParser
 
 		return source;
 	}
-
-	public abstract String resolveMethod( String... args ) throws Exception;
 }

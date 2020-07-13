@@ -14,9 +14,9 @@ package io.amelia.engine.scripting;
  */
 public interface ScriptingEvents
 {
-	void onBeforeExecute( com.chiorichan.factory.ScriptingContext context );
+	void onBeforeExecute( ScriptingContext context );
 
-	void onAfterExecute( com.chiorichan.factory.ScriptingContext context );
+	void onAfterExecute( ScriptingContext context );
 
-	void onException( com.chiorichan.factory.ScriptingContext context, Throwable throwable );
+	void onException( ScriptingContext context, Throwable throwable );
 }

@@ -9,10 +9,10 @@
  */
 package io.amelia.engine.scripting;
 
-import org.apache.commons.lang3.Validate;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.amelia.extra.UtilityObjects;
 
 /**
  * Similar to StackTraceElement except only used for Groovy Scripts
@@ -34,13 +34,13 @@ public class ScriptTraceElement
 	public ScriptTraceElement( ScriptingContext context, int lineNum, int colNum, String methodName, String className )
 	{
 		this.context = context;
-		fileName = context.scriptName();
+		fileName = context.getScriptName();
 
 		this.lineNum = lineNum;
 		this.colNum = colNum;
 
-		if ( ( className == null || className.isEmpty() ) && context.scriptName() != null )
-			className = context.scriptSimpleName();
+		if ( ( className == null || className.isEmpty() ) && context.getScriptName() != null )
+			className = context.getScriptSimpleName();
 
 		this.methodName = methodName;
 		this.className = className;
@@ -59,9 +59,9 @@ public class ScriptTraceElement
 	public ScriptTraceElement( ScriptingContext context, String msg )
 	{
 		this.context = context;
-		fileName = context.scriptName();
+		fileName = context.getScriptName();
 		methodName = "run";
-		className = context.scriptName() == null || context.scriptName().length() == 0 ? "<Unknown Class>" : context.scriptSimpleName();
+		className = context.getScriptName() == null || context.getScriptName().length() == 0 ? "<Unknown Class>" : context.getScriptSimpleName();
 
 		if ( msg != null && !msg.isEmpty() )
 			examineMessage( msg );
@@ -72,9 +72,9 @@ public class ScriptTraceElement
 		return context;
 	}
 
-	public com.chiorichan.factory.ScriptTraceElement examineMessage( String msg )
+	public ScriptTraceElement examineMessage( String msg )
 	{
-		Validate.notNull( msg );
+		UtilityObjects.notNull( msg );
 
 		// Improve parsing for line and column numbers
 

@@ -11,8 +11,8 @@ import java.util.Properties;
 
 import javax.annotation.Nonnull;
 
-import io.amelia.engine.subsystem.EngineCore;
-import io.amelia.engine.subsystem.log.L;
+import io.amelia.engine.EngineCore;
+import io.amelia.engine.log.L;
 import io.amelia.lang.ApplicationException;
 import io.amelia.extra.UtilityIO;
 

@@ -19,8 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.amelia.engine.subsystem.EngineCore;
-import io.amelia.foundation.Kernel;
+import io.amelia.engine.EngineCore;
 import io.amelia.extra.UtilityIO;
 
 /**
@@ -85,7 +84,7 @@ public class Sys
 		}
 		catch ( Exception e )
 		{
-			if ( Kernel.isDevelopment() )
+			if ( EngineCore.isDevelopment() )
 				e.printStackTrace();
 			return def;
 		}

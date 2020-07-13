@@ -76,36 +76,6 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 		this.localName = localName;
 	}
 
-	public final BaseClass addFlag( int... flags )
-	{
-		notDisposed();
-		for ( int flag : flags )
-		{
-			if ( flag == Flags.DISPOSED )
-				throw new ContainerException( "The DISPOSED flag is reserved for internal use only." );
-			this.flags.set( flag );
-		}
-		return ( BaseClass ) this;
-	}
-
-	protected <Cause extends Exception> void callParentRecursive( ConsumerWithException<BaseClass, Cause> callback ) throws Cause
-	{
-		callback.accept( ( BaseClass ) this );
-		if ( parent != null )
-			parent.callParentRecursive( callback );
-	}
-
-	protected <Cause extends Exception> void callRecursive( ConsumerWithException<BaseClass, Cause> callback ) throws Cause
-	{
-		callback.accept( ( BaseClass ) this );
-		Streams.forEachWithException( getChildren(), child -> child.callRecursive( callback ) );
-	}
-
-	protected void canCreateChild( BaseClass node, String key ) throws ExceptionClass
-	{
-		// Always Permitted
-	}
-
 	public final void addChild( @Nullable String newChildName, @Nonnull BaseClass child )
 	{
 		addChild( newChildName, child, ConflictStrategy.IGNORE );
@@ -159,6 +129,36 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 		child.containerOptions = null;
 		children.add( child );
 		setDirty( true );
+	}
+
+	public final BaseClass addFlag( int... flags )
+	{
+		notDisposed();
+		for ( int flag : flags )
+		{
+			if ( flag == Flags.DISPOSED )
+				throw new ContainerException( "The DISPOSED flag is reserved for internal use only." );
+			this.flags.set( flag );
+		}
+		return ( BaseClass ) this;
+	}
+
+	protected <Cause extends Exception> void callParentRecursive( ConsumerWithException<BaseClass, Cause> callback ) throws Cause
+	{
+		callback.accept( ( BaseClass ) this );
+		if ( parent != null )
+			parent.callParentRecursive( callback );
+	}
+
+	protected <Cause extends Exception> void callRecursive( ConsumerWithException<BaseClass, Cause> callback ) throws Cause
+	{
+		callback.accept( ( BaseClass ) this );
+		Streams.forEachWithException( getChildren(), child -> child.callRecursive( callback ) );
+	}
+
+	protected void canCreateChild( BaseClass node, String key ) throws ExceptionClass
+	{
+		// Always Permitted
 	}
 
 	@Nonnull
@@ -293,16 +293,6 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 		return ( BaseClass ) ( flags.get( flag ) ? this : parent == null ? null : parent.findFlag( flag ) );
 	}
 
-	public int getChildCount()
-	{
-		return children.size();
-	}
-
-	public int getChildCountOf( String key )
-	{
-		return getChildVoluntary( key ).map( ContainerBase::getChildCount ).orElse( -1 );
-	}
-
 	public final BaseClass getChild( @Nonnull NodeStack key ) throws NoSuchElementException
 	{
 		return childFind( key ).orElseThrow( NoSuchElementException::new );
@@ -316,6 +306,16 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 	public final BaseClass getChild( @Nonnull TypeBase type ) throws NoSuchElementException
 	{
 		return getChild( type.getPath() );
+	}
+
+	public int getChildCount()
+	{
+		return children.size();
+	}
+
+	public int getChildCountOf( String key )
+	{
+		return getChildVoluntary( key ).map( ContainerBase::getChildCount ).orElse( -1 );
 	}
 
 	public final BaseClass getChildOrCreate( @Nonnull String key )
@@ -404,6 +404,11 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 		return localName;
 	}
 
+	public void setLocalName( @Nonnull String localName )
+	{
+		this.localName = localName;
+	}
+
 	public final Namespace getNamespace()
 	{
 		if ( localName.length() == 0 )
@@ -470,9 +475,28 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 		return hasFlag( Flags.DIRTY );
 	}
 
+	public void setDirty( boolean dirty )
+	{
+		if ( hasFlag( Flags.DISPOSED ) )
+			return; // Ignore
+		if ( dirty )
+			addFlag( Flags.DIRTY );
+		else
+			removeFlag( Flags.DIRTY );
+	}
+
 	public final boolean isDisposed()
 	{
 		return hasFlag( Flags.DISPOSED );
+	}
+
+	public boolean isInvalidateName( @Nullable String name )
+	{
+		if ( name == null || name.length() == 0 )
+			return false;
+		if ( !name.matches( "[A-Za-z0-9*_.]*" ) )
+			return false;
+		return true;
 	}
 
 	/**
@@ -493,15 +517,6 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 	}
 
 	protected abstract boolean isTrimmable0();
-
-	public boolean isInvalidateName( @Nullable String name )
-	{
-		if ( name == null || name.length() == 0 )
-			return false;
-		if ( !name.matches( "[A-Za-z0-9*_.]*" ) )
-			return false;
-		return true;
-	}
 
 	protected final int listenerAdd( ContainerListener.Container container )
 	{
@@ -803,21 +818,6 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 		return ( BaseClass ) this;
 	}
 
-	public void setDirty( boolean dirty )
-	{
-		if ( hasFlag( Flags.DISPOSED ) )
-			return; // Ignore
-		if ( dirty )
-			addFlag( Flags.DIRTY );
-		else
-			removeFlag( Flags.DIRTY );
-	}
-
-	public void setLocalName( @Nonnull String localName )
-	{
-		this.localName = localName;
-	}
-
 	protected final void throwException( String message ) throws ExceptionClass
 	{
 		throw getException( message, null );
@@ -886,14 +886,14 @@ public abstract class ContainerBase<BaseClass extends ContainerBase<BaseClass, E
 			return separator;
 		}
 
-		public String getSeparatorReplacement()
-		{
-			return "_".equals( separator ) ? "-" : "_";
-		}
-
 		public void setSeparator( String separator )
 		{
 			this.separator = separator;
+		}
+
+		public String getSeparatorReplacement()
+		{
+			return "_".equals( separator ) ? "-" : "_";
 		}
 	}
 }

@@ -9,31 +9,29 @@
  */
 package io.amelia.engine.scripting.event;
 
-import com.chiorichan.event.AbstractEvent;
-import com.chiorichan.event.Cancellable;
-import com.chiorichan.factory.ScriptingContext;
+import io.amelia.engine.scripting.ScriptingContext;
 
 public class PostEvalEvent extends AbstractEvent implements Cancellable
 {
-	private ScriptingContext context;
 	private boolean cancelled;
-	
+	private ScriptingContext context;
+
 	public PostEvalEvent( ScriptingContext context )
 	{
 		this.context = context;
 	}
-	
+
 	public ScriptingContext context()
 	{
 		return context;
 	}
-	
+
 	@Override
 	public boolean isCancelled()
 	{
 		return cancelled;
 	}
-	
+
 	@Override
 	public void setCancelled( boolean cancelled )
 	{

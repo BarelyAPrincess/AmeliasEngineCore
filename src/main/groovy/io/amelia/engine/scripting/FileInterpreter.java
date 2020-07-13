@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import io.amelia.engine.config.ConfigRegistry;
 import io.amelia.foundation.ConfigRegistry;
 import io.amelia.logging.LogBuilder;
 import io.netty.buffer.ByteBuf;
@@ -67,7 +68,7 @@ public class FileInterpreter
 
 	public FileInterpreter()
 	{
-		encoding = Charsets.toCharset( ConfigRegistry.i().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) );
+		encoding = Charsets.toCharset( ConfigRegistry.config.getString( "server.defaultBinaryEncoding" ).orElse( "ISO-8859-1" ) );
 
 		// All param keys are lower case. No such thing as a non-lowercase param keys because keys are forced to lowercase.
 		annotations.put( "title", null );
@@ -123,9 +124,9 @@ public class FileInterpreter
 			type = ContentTypes.getContentType( cachedFile.getAbsoluteFile() );
 
 		if ( type.startsWith( "text" ) )
-			setEncoding( Charsets.toCharset( ConfigRegistry.i().getString( "server.defaultTextEncoding", "UTF-8" ) ) );
+			setEncoding( Charsets.toCharset( ConfigRegistry.config.getString( "server.defaultTextEncoding" ).orElse( "UTF-8" ) ) );
 		else
-			setEncoding( Charsets.toCharset( ConfigRegistry.i().getString( "server.defaultBinaryEncoding", "ISO-8859-1" ) ) );
+			setEncoding( Charsets.toCharset( ConfigRegistry.config.getString( "server.defaultBinaryEncoding" ).orElse( "ISO-8859-1" ) ) );
 
 		return type;
 	}
@@ -224,13 +225,13 @@ public class FileInterpreter
 								val = val.substring( 1, val.length() - 1 );
 
 							annotations.put( key.toLowerCase(), val );
-							LogBuilder.get().finer( "Setting param '" + key + "' to '" + val + "'" );
+							L.finer( "Setting param '" + key + "' to '" + val + "'" );
 
 							if ( key.equals( "encoding" ) )
 								if ( Charset.isSupported( val ) )
 									setEncoding( Charsets.toCharset( val ) );
 								else
-									LogBuilder.get().severe( "The file '" + file.getAbsolutePath() + "' requested encoding '" + val + "' but it's not supported by the JVM!" );
+									L.severe( "The file '" + file.getAbsolutePath() + "' requested encoding '" + val + "' but it's not supported by the JVM!" );
 						}
 						catch ( NullPointerException | ArrayIndexOutOfBoundsException e )
 						{

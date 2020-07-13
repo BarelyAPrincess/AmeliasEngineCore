@@ -1,30 +1,23 @@
 package io.amelia.engine.wrapper;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Formatter;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.security.MessageDigest;
 import java.util.zip.ZipInputStream;
 
 import io.amelia.data.parcel.Parcel;
-import io.amelia.engine.subsystem.log.L;
+import io.amelia.engine.log.L;
 import io.amelia.extra.UtilityIO;
+import io.amelia.support.Sys;
 
 public class Install
 {
@@ -107,7 +100,7 @@ public class Install
 				final Path markerFile = localZipFile.getParent().resolve( localZipFile.getFileName() + ".ok" );
 				if ( Files.isDirectory( distDir ) && Files.isRegularFile( markerFile ) )
 				{
-					InstallCheck installCheck = verifyDistributionRoot( distDir, distDir.toAbsolutePath() );
+					InstallCheck installCheck = verifyDistributionRoot( distDir, UtilityIO.relPath( distDir ) );
 					if ( installCheck.isVerified() )
 					{
 						return installCheck.engineHome;
@@ -132,8 +125,8 @@ public class Install
 				List<Path> topLevelDirs = listDirs( distDir );
 				for ( Path dir : topLevelDirs )
 				{
-					L.info( "Deleting directory " + dir.getAbsolutePath() );
-					deleteDir( dir );
+					L.info( "Deleting directory " + UtilityIO.relPath( dir ) );
+					UtilityIO.deleteIfExists( dir );
 				}
 
 				verifyDownloadChecksum( configuration.getValue( WrapperExecutor.DISTRIBUTION_URL_PROPERTY ).map( o -> ( ( URI ) o ).toString() ).orElse( null ), localZipFile, distributionSha256Sum );
@@ -144,7 +137,7 @@ public class Install
 				}
 				catch ( IOException e )
 				{
-					L.severe( "Could not unzip " + localZipFile.getAbsolutePath() + " to " + distDir.getAbsolutePath() + "." );
+					L.severe( "Could not unzip " + UtilityIO.relPath( localZipFile ) + " to " + UtilityIO.relPath( distDir ) + "." );
 					L.severe( "Reason: " + e.getMessage() );
 					throw e;
 				}
@@ -153,42 +146,13 @@ public class Install
 				if ( installCheck.isVerified() )
 				{
 					setExecutablePermissions( installCheck.engineHome );
-					markerFile.createNewFile();
+					Files.createFile( markerFile );
 					return installCheck.engineHome;
 				}
 				// Distribution couldn't be installed.
 				throw new RuntimeException( installCheck.failureMessage );
 			}
 		} );
-	}
-
-	private boolean deleteDir( Path dir )
-	{
-		if ( dir.isDirectory() )
-		{
-			String[] children = dir.list();
-			for ( int i = 0; i < children.length; i++ )
-			{
-				boolean success = deleteDir( new File( dir, children[i] ) );
-				if ( !success )
-				{
-					return false;
-				}
-			}
-		}
-
-		// The directory is now empty so delete it
-		return dir.delete();
-	}
-
-	private boolean isWindows()
-	{
-		String osName = System.getProperty( "os.name" ).toLowerCase( Locale.US );
-		if ( osName.indexOf( "windows" ) > -1 )
-		{
-			return true;
-		}
-		return false;
 	}
 
 	private List<Path> listDirs( Path distDir )
@@ -208,61 +172,19 @@ public class Install
 
 	private void setExecutablePermissions( Path engineHome )
 	{
-		if ( isWindows() )
-		{
+		if ( Sys.isWindows() )
 			return;
-		}
+
 		Path engineCommand = engineHome.resolve( "bin/engine" );
 		String errorMessage = null;
 		try
 		{
-			UtilityIO.setGroupReadWritePermissions( engineCommand );
-
-			Set<PosixFilePermission> perms = new HashSet<>();
-			//add owners permission
-			perms.add( PosixFilePermission.OWNER_READ );
-			perms.add( PosixFilePermission.OWNER_WRITE );
-			perms.add( PosixFilePermission.OWNER_EXECUTE );
-			//add group permissions
-			perms.add( PosixFilePermission.GROUP_READ );
-			perms.add( PosixFilePermission.GROUP_WRITE );
-			perms.add( PosixFilePermission.GROUP_EXECUTE );
-			//add others permissions
-			perms.add( PosixFilePermission.OTHERS_READ );
-			perms.add( PosixFilePermission.OTHERS_WRITE );
-			perms.add( PosixFilePermission.OTHERS_EXECUTE );
-
-			Files.setPosixFilePermissions( engineCommand, perms );
-
-
-
-			Set<PosixFilePermission> perms = Files.getPosixFilePermissions( engineCommand );
-
-			ProcessBuilder pb = new ProcessBuilder( "chmod", "755", engineCommand.toAbsolutePath().toString() );
-			Process p = pb.start();
-			if ( p.waitFor() != 0 )
-			{
-				BufferedReader is = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
-				Formatter stdout = new Formatter();
-				String line;
-				while ( ( line = is.readLine() ) != null )
-				{
-					stdout.format( "%s%n", line );
-				}
-				errorMessage = stdout.toString();
-			}
+			UtilityIO.setPermissionsSymbolic( engineCommand, "a=rx o=rwx" ); // 755
 		}
 		catch ( IOException e )
 		{
-			errorMessage = e.getMessage();
-		}
-		catch ( InterruptedException e )
-		{
-			Thread.currentThread().interrupt();
-			errorMessage = e.getMessage();
-		}
-		if ( errorMessage != null )
 			L.info( "Could not set executable permissions for: " + engineCommand.toAbsolutePath() );
+		}
 	}
 
 	private void unzip( Path zip, Path dest ) throws IOException
@@ -343,9 +265,8 @@ public class Install
 		{
 			return new InstallCheck( engineHome, null );
 		}
-
-		private final String failureMessage;
 		private final Path engineHome;
+		private final String failureMessage;
 
 		private InstallCheck( Path engineHome, String failureMessage )
 		{

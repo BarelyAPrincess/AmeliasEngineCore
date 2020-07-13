@@ -56,14 +56,14 @@ public abstract class NodeStack<Self extends io.amelia.support.NodeStack> implem
 	{
 		this.creator = creator;
 		this.glue = glue;
-		this.nodes = UtilityArrs.removeEmptyStrings( nodes ); // Strs.toLowerCase()?
+		this.nodes = UtilityArrs.removeEmptyStrings( nodes ); // UtilityStrings.toLowerCase()?
 	}
 
 	protected NodeStack( NonnullBiFunction<Self, String[], Self> creator, String glue, Collection<String> nodes )
 	{
 		this.creator = creator;
 		this.glue = glue;
-		this.nodes = nodes.toArray( new String[0] );// Strs.toLowerCase()?
+		this.nodes = nodes.toArray( new String[0] );// UtilityStrings.toLowerCase()?
 	}
 
 	protected NodeStack( NonnullBiFunction<Self, String[], Self> creator, String glue )

@@ -39,7 +39,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -65,9 +64,9 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.xml.bind.DatatypeConverter;
 
-import io.amelia.engine.subsystem.StorageEngine;
-import io.amelia.engine.subsystem.injection.Libraries;
-import io.amelia.engine.subsystem.log.L;
+import io.amelia.engine.storage.StorageBus;
+import io.amelia.engine.injection.Libraries;
+import io.amelia.engine.log.L;
 import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ReportingLevel;
 import io.amelia.support.EnumColor;
@@ -799,7 +798,7 @@ public class UtilityIO
 
 	public static void extractResourceZip( @Nonnull String res, @Nonnull Path dest, @Nonnull Class<?> clz ) throws IOException
 	{
-		Path cache = StorageEngine.getPath( StorageEngine.PATH_CACHE );
+		Path cache = StorageBus.getPath( StorageBus.PATH_CACHE );
 		forceCreateDirectory( cache );
 
 		Path temp = Paths.get( "temp.zip" ).resolve( cache );
@@ -959,6 +958,11 @@ public class UtilityIO
 			if ( path.contains( separator ) )
 				return path.substring( 0, path.lastIndexOf( separator ) );
 		return "";
+	}
+
+	public static PermissionReference getPermissionReference( Path path ) throws IOException
+	{
+		return new PermissionReference( path );
 	}
 
 	/**
@@ -1570,7 +1574,7 @@ public class UtilityIO
 	@Nullable
 	public static String relPath( @Nullable String file )
 	{
-		return relPath( file, StorageEngine.getPath().toString() );
+		return relPath( file, StorageBus.getPath().toString() );
 	}
 
 	@Nullable
@@ -1644,39 +1648,41 @@ public class UtilityIO
 			throw new ApplicationException.Uncaught( ReportingLevel.E_ERROR, "Experienced a problem setting read and write access to directory \"" + relPath( file ) + "\"!" );
 	}
 
-	public static PermissionReference getPermissionReference( Path path ) throws IOException
+	public static void setGroupReadWritePermissions( Path path ) throws IOException
 	{
-		return new PermissionReference( path );
+		Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions( path );
+		posixFilePermissions.add( PosixFilePermission.GROUP_READ );
+		posixFilePermissions.add( PosixFilePermission.GROUP_WRITE );
+		if ( Files.isDirectory( path ) )
+			posixFilePermissions.add( PosixFilePermission.GROUP_EXECUTE );
+		Files.setPosixFilePermissions( path, posixFilePermissions );
 	}
 
-	public static class PermissionReference
+	public static void setOthersReadWritePermissions( Path path ) throws IOException
 	{
-		Set<PosixFilePermission> current;
-		Path path;
+		Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions( path );
+		posixFilePermissions.add( PosixFilePermission.OTHERS_READ );
+		posixFilePermissions.add( PosixFilePermission.OTHERS_WRITE );
+		if ( Files.isDirectory( path ) )
+			posixFilePermissions.add( PosixFilePermission.OTHERS_EXECUTE );
+		Files.setPosixFilePermissions( path, posixFilePermissions );
+	}
 
-		public PermissionReference( Path path ) throws IOException
-		{
-			current = Files.getPosixFilePermissions( path );
-			this.path = path;
-		}
-
-		public void setOwner( int posixInt )
-		{
-			if ( posixInt > 7 || posixInt < 0 )
-				throw new IllegalArgumentException( "POSIX value can't be less than zero or more than 7." );
-			if ( posixInt % 4 == 0 )
-			{
-
-			}
-		}
+	public static void setOwnerReadWritePermissions( Path path ) throws IOException
+	{
+		Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions( path );
+		posixFilePermissions.add( PosixFilePermission.OWNER_READ );
+		posixFilePermissions.add( PosixFilePermission.OWNER_WRITE );
+		if ( Files.isDirectory( path ) )
+			posixFilePermissions.add( PosixFilePermission.OWNER_EXECUTE );
+		Files.setPosixFilePermissions( path, posixFilePermissions );
 	}
 
 	public static void setPermissionsSymbolic( Path path, String perms ) throws IOException
 	{
 		for ( String perm : perms.split( " " ) )
 		{
-			Set<PosixFilePermission> currentPerms = Files.getPosixFilePermissions( path );
-			Set<PosixFilePermission> newPerms = new HashSet<>();
+			Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions( path );
 			boolean user = false;
 			boolean group = false;
 			boolean other = false;
@@ -1708,62 +1714,65 @@ public class UtilityIO
 							step++;
 							break;
 						default:
-							throw new IllegalArgumentException( String.format( "Invalid symbolic mode, e.g., [ugoa...][[-+=][perms...]...]. {user='%s', group='%s', other='%s', operand='%s', step='%s'}", user, group, other, operand, step ) );
+							throw new IllegalArgumentException( String.format( "Invalid symbolic mode, e.g., [ugoa...][[-+=][perms...]...]. {argument='%s', user='%s', group='%s', other='%s', operand='%s', step='%s'}", perms, user, group, other, operand, step ) );
 					}
 				if ( step == 1 )
 				{
 					if ( c == '+' || c == '-' || c == '=' )
 						operand = c;
 					else
-						throw new IllegalArgumentException( String.format( "Invalid symbolic mode, e.g., [ugoa...][[-+=][perms...]...]. {user='%s', group='%s', other='%s', operand='%s', step='%s'}", user, group, other, operand, step ) );
-					// Discard
-					if ( operand == '+' || operand == '-' )
+						throw new IllegalArgumentException( String.format( "Invalid symbolic mode, e.g., [ugoa...][[-+=][perms...]...]. {argument='%s', user='%s', group='%s', other='%s', operand='%s', step='%s'}", perms, user, group, other, operand, step ) );
+
+					if ( operand == '=' )
 					{
 						if ( user )
-							currentPerms.stream().filter( p -> p == PosixFilePermission.OWNER_EXECUTE || p == PosixFilePermission.OWNER_READ || p == PosixFilePermission.OWNER_WRITE ).forEach( newPerms::add );
+							posixFilePermissions.removeAll( Arrays.asList( PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE ) );
 						if ( group )
-							currentPerms.stream().filter( p -> p == PosixFilePermission.GROUP_EXECUTE || p == PosixFilePermission.GROUP_READ || p == PosixFilePermission.GROUP_WRITE ).forEach( newPerms::add );
+							posixFilePermissions.removeAll( Arrays.asList( PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE ) );
 						if ( other )
-							currentPerms.stream().filter( p -> p == PosixFilePermission.OTHERS_EXECUTE || p == PosixFilePermission.OTHERS_READ || p == PosixFilePermission.OTHERS_WRITE ).forEach( newPerms::add );
+							posixFilePermissions.removeAll( Arrays.asList( PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_EXECUTE ) );
 					}
 					step++;
 				}
 				if ( step == 2 )
-				{
-
-				}
+					switch ( c )
+					{
+						case 'r':
+							if ( user )
+								posixFilePermissions.add( PosixFilePermission.OWNER_READ );
+							if ( group )
+								posixFilePermissions.add( PosixFilePermission.GROUP_READ );
+							if ( other )
+								posixFilePermissions.add( PosixFilePermission.OTHERS_READ );
+							break;
+						case 'w':
+							if ( user )
+								posixFilePermissions.add( PosixFilePermission.OWNER_WRITE );
+							if ( group )
+								posixFilePermissions.add( PosixFilePermission.GROUP_WRITE );
+							if ( other )
+								posixFilePermissions.add( PosixFilePermission.OTHERS_WRITE );
+							break;
+						case 'x':
+							if ( user )
+								posixFilePermissions.add( PosixFilePermission.OWNER_EXECUTE );
+							if ( group )
+								posixFilePermissions.add( PosixFilePermission.GROUP_EXECUTE );
+							if ( other )
+								posixFilePermissions.add( PosixFilePermission.OTHERS_EXECUTE );
+							break;
+						case 'X':
+							throw new IllegalArgumentException( String.format( "Perm flag not supported. {argument='%s', user='%s', group='%s', other='%s', operand='%s', step='%s'}", perms, user, group, other, operand, step ) );
+						case 's':
+							throw new IllegalArgumentException( String.format( "Perm flag not supported. {argument='%s', user='%s', group='%s', other='%s', operand='%s', step='%s'}", perms, user, group, other, operand, step ) );
+						case 't':
+							throw new IllegalArgumentException( String.format( "Perm flag not supported. {argument='%s', user='%s', group='%s', other='%s', operand='%s', step='%s'}", perms, user, group, other, operand, step ) );
+						default:
+							throw new IllegalArgumentException( String.format( "Invalid symbolic mode, e.g., [ugoa...][[-+=][perms...]...]. {argument='%s', user='%s', group='%s', other='%s', operand='%s', step='%s'}", perms, user, group, other, operand, step ) );
+					}
 			}
+			Files.setPosixFilePermissions( path, posixFilePermissions );
 		}
-	}
-
-	public static void setGroupReadWritePermissions( Path path ) throws IOException
-	{
-		Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions( path );
-		posixFilePermissions.add( PosixFilePermission.GROUP_READ );
-		posixFilePermissions.add( PosixFilePermission.GROUP_WRITE );
-		if ( Files.isDirectory( path ) )
-			posixFilePermissions.add( PosixFilePermission.GROUP_EXECUTE );
-		Files.setPosixFilePermissions( path, posixFilePermissions );
-	}
-
-	public static void setOthersReadWritePermissions( Path path ) throws IOException
-	{
-		Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions( path );
-		posixFilePermissions.add( PosixFilePermission.OTHERS_READ );
-		posixFilePermissions.add( PosixFilePermission.OTHERS_WRITE );
-		if ( Files.isDirectory( path ) )
-			posixFilePermissions.add( PosixFilePermission.OTHERS_EXECUTE );
-		Files.setPosixFilePermissions( path, posixFilePermissions );
-	}
-
-	public static void setOwnerReadWritePermissions( Path path ) throws IOException
-	{
-		Set<PosixFilePermission> posixFilePermissions = Files.getPosixFilePermissions( path );
-		posixFilePermissions.add( PosixFilePermission.OWNER_READ );
-		posixFilePermissions.add( PosixFilePermission.OWNER_WRITE );
-		if ( Files.isDirectory( path ) )
-			posixFilePermissions.add( PosixFilePermission.OWNER_EXECUTE );
-		Files.setPosixFilePermissions( path, posixFilePermissions );
 	}
 
 	public static String toString( Path path )
@@ -1780,6 +1789,44 @@ public class UtilityIO
 		for ( int i = 0; i < path.getNameCount(); i++ )
 			nodes.add( path.getName( i ).toString() );
 		return UtilityStrings.join( nodes, separator );
+	}
+
+	public static void writeBytesToFile( File file, byte[] toByteArray ) throws IOException
+	{
+		writeBytesToFile( file, toByteArray, false );
+	}
+
+	public static void writeBytesToFile( File file, byte[] toByteArray, boolean append ) throws IOException
+	{
+		OutputStream outputStream = null;
+		try
+		{
+			outputStream = new FileOutputStream( file );
+			outputStream.write( toByteArray );
+		}
+		finally
+		{
+			closeQuietly( outputStream );
+		}
+	}
+
+	public static void writeBytesToFile( Path file, byte[] toByteArray ) throws IOException
+	{
+		writeBytesToFile( file, toByteArray, false );
+	}
+
+	public static void writeBytesToFile( Path path, byte[] toByteArray, boolean append ) throws IOException
+	{
+		OutputStream outputStream = null;
+		try
+		{
+			outputStream = Files.newOutputStream( path );
+			outputStream.write( toByteArray );
+		}
+		finally
+		{
+			closeQuietly( outputStream );
+		}
 	}
 
 	public static void writeStringToFile( String data, File file ) throws IOException
@@ -2272,6 +2319,28 @@ public class UtilityIO
 			long right = UtilityObjects.getOrDefault( () -> getLastModified( rightPath ), 0L );
 
 			return descending ? Long.compare( left, right ) : Long.compare( right, left );
+		}
+	}
+
+	public static class PermissionReference
+	{
+		Set<PosixFilePermission> current;
+		Path path;
+
+		public PermissionReference( Path path ) throws IOException
+		{
+			current = Files.getPosixFilePermissions( path );
+			this.path = path;
+		}
+
+		public void setOwner( int posixInt )
+		{
+			if ( posixInt > 7 || posixInt < 0 )
+				throw new IllegalArgumentException( "POSIX value can't be less than zero or more than 7." );
+			if ( posixInt % 4 == 0 )
+			{
+
+			}
 		}
 	}
 

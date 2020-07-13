@@ -15,25 +15,25 @@ import com.chiorichan.factory.ScriptingContext;
 
 public class PreEvalEvent extends AbstractEvent implements Cancellable
 {
-	private boolean cancelled;
 	private final ScriptingContext context;
-	
+	private boolean cancelled;
+
 	public PreEvalEvent( ScriptingContext context )
 	{
 		this.context = context;
 	}
-	
+
 	public ScriptingContext context()
 	{
 		return context;
 	}
-	
+
 	@Override
 	public boolean isCancelled()
 	{
 		return cancelled;
 	}
-	
+
 	@Override
 	public void setCancelled( boolean cancelled )
 	{

@@ -9,28 +9,27 @@
  */
 package io.amelia.engine.scripting;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
-import org.apache.commons.lang3.Validate;
-
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import io.amelia.extra.UtilityObjects;
 
 /**
  * Sits as an interface between GroovyShell and Interpreters
  */
 public class StackFactory
 {
-	Map<String, ScriptingContext> scriptStack = Maps.newLinkedHashMap();
-	Map<String, ScriptingContext> scriptStackHistory = Maps.newLinkedHashMap();
+	Map<String, ScriptingContext> scriptStack = new LinkedHashMap<>();
+	Map<String, ScriptingContext> scriptStackHistory = new LinkedHashMap<>();
 
 	public List<ScriptTraceElement> examineStackTrace( StackTraceElement[] stackTrace )
 	{
-		Validate.notNull( stackTrace );
+		UtilityObjects.notNull( stackTrace );
 
-		List<ScriptTraceElement> scriptTrace = Lists.newLinkedList();
+		List<ScriptTraceElement> scriptTrace = new LinkedList<>();
 
 		for ( StackTraceElement ste : stackTrace )
 			if ( ste.getFileName() != null && scriptStackHistory.containsKey( ste.getFileName() ) )
@@ -41,7 +40,7 @@ public class StackFactory
 		{
 			boolean contains = false;
 			for ( ScriptTraceElement ste : scriptTrace )
-				if ( ste.context().filename().equals( context.filename() ) )
+				if ( ste.context().getFileName().equals( context.getFileName() ) )
 					contains = true;
 			if ( !contains )
 				scriptTrace.add( 0, new ScriptTraceElement( context, "" ) );

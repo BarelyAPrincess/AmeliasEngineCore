@@ -25,10 +25,10 @@ import io.amelia.support.Versioning;
 
 public class Localization
 {
+	private File baseFile;
 	// TODO Implement language specification, right now only "en" is available
 	private Map<String, Pair<Long, ConfigurationSection>> langCache = new ConcurrentHashMap<>();
 	private String locale = "en";
-	private File baseFile;
 
 	public Localization( File baseFile )
 	{
@@ -36,19 +36,6 @@ public class Localization
 		this.baseFile = new File( baseFile, locale );
 		if ( !baseFile.exists() )
 			baseFile.mkdirs();
-	}
-
-	public void setLocale( String locale )
-	{
-		this.locale = locale;
-		this.baseFile = new File( baseFile, locale );
-		if ( !baseFile.exists() )
-			baseFile.mkdirs();
-	}
-
-	public String getLocale()
-	{
-		return locale;
 	}
 
 	private ConfigurationSection getLang( String key ) throws LocalizationException
@@ -70,58 +57,17 @@ public class Localization
 		return yaml;
 	}
 
-	public String localeTrans( String key ) throws LocalizationException
+	public String getLocale()
 	{
-		UtilObjects.notEmpty( key );
-		key = UtilStrings.trimAll( key, '.' );
-		if ( !key.contains( "." ) )
-			throw new LocalizationException( "Language key must contain a prefix file, e.g., general.yaml -> general.welcomeText. [" + key + "]" );
-		if ( !key.matches( "^[a-zA-Z0-9._-]*$" ) )
-			throw new LocalizationException( "Language key contains illegal characters. [" + key + "]" );
-
-		String prefix = key.substring( 0, key.lastIndexOf( "." ) );
-
-		if ( UtilObjects.isEmpty( prefix ) )
-			throw new LocalizationException( "Language prefix is empty." );
-
-		key = key.substring( key.lastIndexOf( "." ) + 1 );
-
-		if ( UtilObjects.isEmpty( key ) )
-			throw new LocalizationException( "Language key is empty." );
-
-		ConfigurationSection lang;
-		if ( langCache.containsKey( prefix ) && langCache.get( prefix ).getKey() > Timings.epoch() - ( Versioning.isDevelopment() ? Timings.SECOND_15 : Timings.HOUR ) )
-			lang = langCache.get( prefix ).getValue();
-		else
-		{
-			lang = getLang( prefix );
-			langCache.put( prefix, new Pair<>( Timings.epoch(), lang ) );
-		}
-
-		return lang.getString( key );
+		return locale;
 	}
 
-	public String localeTrans( String key, Map<String, String> params ) throws LocalizationException
+	public void setLocale( String locale )
 	{
-		String str = localeTrans( key );
-
-		for ( Map.Entry<String, String> param : params.entrySet() )
-		{
-			int inx = str.toLowerCase().indexOf( ":" + param.getKey().toLowerCase() );
-			if ( inx == -1 )
-				throw new LocalizationException( "Locale param is not found within language string. {key: " + param.getKey() + ", string: " + str + "}" );
-			String tester = str.substring( inx, param.getKey().length() );
-			String val = param.getValue();
-
-			if ( UtilStrings.isUppercase( tester ) )
-				val = val.toUpperCase();
-			if ( UtilStrings.isCapitalizedWords( tester ) )
-				val = UtilStrings.capitalizeWords( val );
-
-			str = str.substring( 0, inx ) + val + str.substring( inx + param.getKey().length() );
-		}
-
-		return str;
+		this.locale = locale;
+		this.baseFile = new File( baseFile, locale );
+		if ( !baseFile.exists() )
+			baseFile.mkdirs();
 	}
 
 	public String localePlural( String key, int cnt ) throws LocalizationException
@@ -185,5 +131,59 @@ public class Localization
 		}
 
 		return str;
+	}
+
+	public String localeTrans( String key, Map<String, String> params ) throws LocalizationException
+	{
+		String str = localeTrans( key );
+
+		for ( Map.Entry<String, String> param : params.entrySet() )
+		{
+			int inx = str.toLowerCase().indexOf( ":" + param.getKey().toLowerCase() );
+			if ( inx == -1 )
+				throw new LocalizationException( "Locale param is not found within language string. {key: " + param.getKey() + ", string: " + str + "}" );
+			String tester = str.substring( inx, param.getKey().length() );
+			String val = param.getValue();
+
+			if ( UtilStrings.isUppercase( tester ) )
+				val = val.toUpperCase();
+			if ( UtilStrings.isCapitalizedWords( tester ) )
+				val = UtilStrings.capitalizeWords( val );
+
+			str = str.substring( 0, inx ) + val + str.substring( inx + param.getKey().length() );
+		}
+
+		return str;
+	}
+
+	public String localeTrans( String key ) throws LocalizationException
+	{
+		UtilObjects.notEmpty( key );
+		key = UtilStrings.trimAll( key, '.' );
+		if ( !key.contains( "." ) )
+			throw new LocalizationException( "Language key must contain a prefix file, e.g., general.yaml -> general.welcomeText. [" + key + "]" );
+		if ( !key.matches( "^[a-zA-Z0-9._-]*$" ) )
+			throw new LocalizationException( "Language key contains illegal characters. [" + key + "]" );
+
+		String prefix = key.substring( 0, key.lastIndexOf( "." ) );
+
+		if ( UtilObjects.isEmpty( prefix ) )
+			throw new LocalizationException( "Language prefix is empty." );
+
+		key = key.substring( key.lastIndexOf( "." ) + 1 );
+
+		if ( UtilObjects.isEmpty( key ) )
+			throw new LocalizationException( "Language key is empty." );
+
+		ConfigurationSection lang;
+		if ( langCache.containsKey( prefix ) && langCache.get( prefix ).getKey() > Timings.epoch() - ( Versioning.isDevelopment() ? Timings.SECOND_15 : Timings.HOUR ) )
+			lang = langCache.get( prefix ).getValue();
+		else
+		{
+			lang = getLang( prefix );
+			langCache.put( prefix, new Pair<>( Timings.epoch(), lang ) );
+		}
+
+		return lang.getString( key );
 	}
 }

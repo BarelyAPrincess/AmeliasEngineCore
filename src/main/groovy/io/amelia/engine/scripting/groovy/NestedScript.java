@@ -46,14 +46,14 @@ public class NestedScript extends Builtin
 	}
 
 	@Override
-	public Object run()
-	{
-		return null;
-	}
-
-	@Override
 	public ScriptingFactory getScriptingFactory()
 	{
 		return request.getScriptingFactory();
+	}
+
+	@Override
+	public Object run()
+	{
+		return null;
 	}
 }

@@ -9,330 +9,263 @@
  */
 package io.amelia.engine.scripting;
 
-import com.chiorichan.ContentTypes;
-import com.chiorichan.factory.models.SQLModelBuilder;
-import com.chiorichan.libraries.LibraryClassLoader;
-import com.chiorichan.net.http.HttpRequestWrapper;
-import com.chiorichan.site.Site;
-import com.chiorichan.site.SiteModule;
-import com.chiorichan.utils.UtilEncryption;
-import com.chiorichan.utils.UtilIO;
-import com.chiorichan.utils.UtilObjects;
-
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import io.amelia.foundation.ConfigRegistry;
-import io.amelia.lang.ExceptionContext;
+import io.amelia.engine.injection.LibraryClassLoader;
+import io.amelia.engine.EngineCore;
+import io.amelia.engine.config.ConfigRegistry;
+import io.amelia.engine.scripting.lang.ScriptingException;
+import io.amelia.engine.scripting.processing.ScriptingProcessor;
+import io.amelia.engine.storage.StorageBus;
+import io.amelia.extra.UtilityEncrypt;
+import io.amelia.extra.UtilityIO;
+import io.amelia.extra.UtilityObjects;
+import io.amelia.extra.UtilityStrings;
 import io.amelia.lang.ExceptionReport;
-import io.amelia.lang.IException;
 import io.amelia.lang.MultipleException;
-import io.amelia.lang.ReportingLevel;
-import io.amelia.lang.ScriptingException;
-import io.amelia.logging.LogBuilder;
-import io.amelia.support.Versioning;
+import io.amelia.support.ContentTypes;
+import io.amelia.support.Streams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
  * Provides the context to a requested eval of the EvalFactory
  */
-public class ScriptingContext implements ExceptionContext
+public abstract class ScriptingContext<Subclass extends ScriptingContext>
 {
-	private String scriptBaseClass;
-
-	public static com.chiorichan.factory.ScriptingContext fromAuto( final Site site, final String res )
-	{
-		// Might need a better attempt at auto determining file types
-		// File types meaning located in public webroot verses resource
-
-		com.chiorichan.factory.ScriptingContext context = fromFile( site, res );
-		if ( context == null || context.result().hasExceptions() )
-		{
-			if ( res.contains( "." ) )
-				return com.chiorichan.factory.ScriptingContext.fromPackage( site, res );
-
-			context = new com.chiorichan.factory.ScriptingContext();
-			context.result().addException( new ScriptingException( ReportingLevel.E_ERROR, String.format( "We could not auto determine the resource type for '%s'", res ) ) );
-			return context;
-		}
-		return context;
-	}
-
-	static com.chiorichan.factory.ScriptingContext fromFile( final File file )
-	{
-		try
-		{
-			return fromFile( new com.chiorichan.factory.FileInterpreter( file ) );
-		}
-		catch ( IOException e )
-		{
-			com.chiorichan.factory.ScriptingContext context = new com.chiorichan.factory.ScriptingContext();
-			context.result.handleException( e, context );
-			return context;
-		}
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromFile( final com.chiorichan.factory.FileInterpreter fi )
-	{
-		com.chiorichan.factory.ScriptingContext context = fromSource( fi.consumeBytes(), fi.getFilePath() );
-		context.contentType = fi.getContentType();
-		context.shell = fi.getAnnotations().get( "shell" );
-		return context;
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromFile( final Site site, final String file )
-	{
-		// We block absolute file paths for both unix-like and windows
-		if ( file.startsWith( File.separator ) || file.matches( "[A-Za-z]:\\.*" ) )
-			throw new SecurityException( "To protect system resources, this page has been blocked from accessing an absolute file path." );
-		if ( file.startsWith( ".." + File.separator ) )
-			throw new SecurityException( "To protect system resources, this page has been blocked from accessing a protected file path." );
-		try
-		{
-			return fromFile( site.resourceFile( file ) );
-		}
-		catch ( IOException e )
-		{
-			com.chiorichan.factory.ScriptingContext context = com.chiorichan.factory.ScriptingContext.fromSource( "", file );
-			context.result().addException( new ScriptingException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the file '%s' within site '%s'", file, site.getId() ), e ) );
-			context.site( site );
-			return context;
-		}
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromPackage( final Site site, final String pack )
-	{
-		com.chiorichan.factory.ScriptingContext context;
-
-		try
-		{
-			File packFile = site.resourcePackage( pack );
-			com.chiorichan.factory.FileInterpreter fi = new com.chiorichan.factory.FileInterpreter( packFile );
-			context = com.chiorichan.factory.ScriptingContext.fromFile( fi );
-		}
-		catch ( IOException e )
-		{
-			context = com.chiorichan.factory.ScriptingContext.fromSource( "", pack );
-			context.result().addException( new ScriptingException( ReportingLevel.E_IGNORABLE, String.format( "Could not locate the package '%s' within site '%s'", pack, site.getId() ), e ) );
-		}
-
-		context.site( site );
-
-		return context;
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromPackageWithException( final Site site, final String pack ) throws IOException
-	{
-		File packFile = site.resourcePackage( pack );
-		com.chiorichan.factory.FileInterpreter fi = new com.chiorichan.factory.FileInterpreter( packFile );
-		com.chiorichan.factory.ScriptingContext context = com.chiorichan.factory.ScriptingContext.fromFile( fi );
-		context.site( site );
-
-		return context;
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromSource( byte[] source )
-	{
-		return fromSource( source, "<no file>" );
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromSource( final byte[] source, final File file )
-	{
-		return fromSource( source, file.getAbsolutePath() );
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromSource( final byte[] source, final String filename )
-	{
-		com.chiorichan.factory.ScriptingContext context = new com.chiorichan.factory.ScriptingContext();
-		context.filename = filename;
-		context.write( source );
-		context.baseSource( new String( source, context.charset ) );
-		return context;
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromSource( String source )
-	{
-		return fromSource( source, "" );
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromSource( final String source, final File file )
-	{
-		return fromSource( source, file.getAbsolutePath() );
-	}
-
-	public static com.chiorichan.factory.ScriptingContext fromSource( final String source, final String filename )
-	{
-		com.chiorichan.factory.ScriptingContext context = fromSource( new byte[0], filename );
-		context.write( source.getBytes( context.charset ) );
-		return context;
-	}
-
 	public static List<String> getPreferredExtensions()
 	{
-		return ConfigRegistry.i().getStringList( "advanced.scripting.preferredExtensions", Arrays.asList( "html", "htm", "groovy", "gsp", "jsp", "chi" ) );
+		return ConfigRegistry.config.getValue( ScriptingFactory.Config.PREFERRED_EXTENSIONS );
 	}
 
+	private final List<DefinedScriptingOption> options = new ArrayList<>();
+	private Path cacheDirectory;
 	private Charset charset = Charset.defaultCharset();
 	private ByteBuf content = Unpooled.buffer();
-	private String contentType;
-	private ScriptingFactory factory;
-	private String filename;
-	private HttpRequestWrapper request = null;
-	private com.chiorichan.factory.ScriptingResult result = null;
-	private String scriptName;
-	private String scriptPackage;
-	private File cacheDirectory;
+	private String contentType = null;
+	private String fileName = null;
+	private HttpScriptingRequest httpScriptingRequest = null;
+	private boolean isVirtual = true;
+	private ScriptingResult result = null;
+	private String scriptBaseClass = null;
+	private String scriptName = null;
+	private String scriptPackage = null;
+	private ScriptingFactory scriptingFactory = null;
 	private String shell = "embedded";
-	private Site site;
 	private String source = null;
 
-	private ScriptingContext()
+	public HttpScriptingRequest HttpScriptingRequest()
 	{
-
+		return httpScriptingRequest;
 	}
 
-	public String baseSource()
+	public Subclass addOption( String key, String value )
 	{
-		return source;
+		options.add( new DefinedScriptingOption.KeyValue( key, value ) );
+		return ( Subclass ) this;
 	}
 
-	public com.chiorichan.factory.ScriptingContext baseSource( String source )
+	public Subclass addOption( ScriptingOption option, String value )
 	{
-		if ( Versioning.isDevelopment() && !UtilObjects.isNull( cacheFile() ) )
-			try
-			{
-				UtilIO.writeStringToFile( new File( cacheFile().getAbsolutePath() + ".baseSource" ), source );
-			}
-			catch ( IOException e )
-			{
-				// Ignore
-			}
-
-		this.source = source;
-		return this;
+		options.add( new DefinedScriptingOption.Scripting( option, value ) );
+		return ( Subclass ) this;
 	}
 
-	public ByteBuf buffer()
+	public Object eval() throws ScriptingException.Error, ScriptingException.Runtime, MultipleException
+	{
+		ScriptingFactory scriptingFactory = getScriptingFactory();
+		if ( scriptingFactory == null )
+			throw new IllegalArgumentException( "Can not eval() this ScriptingContext without the ScriptingFactory." );
+		result = scriptingFactory.eval( this );
+
+		String str = result.getString();
+
+		ExceptionReport exceptionReport = result.getExceptionReport();
+
+		if ( exceptionReport.hasSevereExceptions() )
+			exceptionReport.throwExceptions( exceptionContext -> exceptionContext.notIgnorable() && ScriptingException.isInnerClass( exceptionContext.getThrowable() ), () -> new IllegalStateException( "We found unexpected exceptions, only ScriptingExceptions are thrown here." ) );
+
+		// TODO Wrap in <pre> if the output is HTML!
+		if ( exceptionReport.hasIgnorableExceptions() )
+			str = exceptionReport.printToString() + "\n\n" + str;
+
+		scriptingFactory.print( str );
+		return result.getObject();
+	}
+
+	public ByteBuf getBuffer()
 	{
 		return content;
 	}
 
-	public String bufferHash()
+	public String getBufferHash()
 	{
-		return UtilEncryption.md5( readBytes() );
+		return UtilityEncrypt.md5Hex( readBytes() );
 	}
 
-	/**
-	 * Returns an exact location of the last compiled script, returns an estimate if script is null, and lastly null if all else.
-	 *
-	 * @return The final script class location
-	 */
-	public File cacheFile()
+	private Path getCacheFile()
 	{
-		if ( scriptClassName() == null )
+		if ( getScriptClassName() == null )
 			return null;
-		return new File( cacheDirectory(), scriptClassName().replace( '.', File.separatorChar ) + ".class" );
+		return Paths.get( getScriptClassName().replace( '.', File.separatorChar ) + ".class" ).resolve( getCachePath() );
 	}
 
-	public File cacheDirectory()
+	public Path getCachePath()
 	{
 		if ( cacheDirectory == null )
-			cacheDirectory = site().directoryTemp();
+			cacheDirectory = getDefaultCachePath();
 		if ( cacheDirectory != null )
 			try
 			{
-				if ( !LibraryClassLoader.pathLoaded( cacheDirectory ) )
+				if ( !LibraryClassLoader.isPathLoaded( cacheDirectory ) )
 					LibraryClassLoader.addPath( cacheDirectory );
 			}
 			catch ( IOException e )
 			{
-				LogBuilder.get().warning( "Failed to add " + UtilIO.relPath( cacheDirectory ) + " to classpath." );
+				ScriptingFactory.L.warning( "Failed to add " + UtilityIO.relPath( cacheDirectory ) + " to classpath.", e );
 			}
 		return cacheDirectory;
 	}
 
-	public com.chiorichan.factory.ScriptingContext cacheDirectory( File cache )
+	public Subclass setCachePath( Path cache )
 	{
 		this.cacheDirectory = cache;
-		return this;
+		return ( Subclass ) this;
 	}
 
-	Charset charset()
+	public Charset getCharset()
 	{
 		return charset;
 	}
 
-	void charset( Charset charset )
+	public Subclass setCharset( Charset charset )
 	{
 		this.charset = charset;
+		return ( Subclass ) this;
 	}
 
-	public String contentType()
+	public String getContentType()
 	{
 		return contentType;
 	}
 
-	public com.chiorichan.factory.ScriptingContext contentType( final String contentType )
+	public Subclass setContentType( final String contentType )
 	{
 		this.contentType = contentType;
-		return this;
+		return ( Subclass ) this;
 	}
 
-	public Object eval() throws ScriptingException, MultipleException
+	protected Path getDefaultCachePath()
 	{
-		if ( request == null && factory == null )
-			throw new IllegalArgumentException( "We can't eval() this EvalContext until you provide either the request or the factory." );
-		if ( request != null && factory == null )
-			factory = request.getScriptingFactory();
-
-		result = factory.eval( this );
-
-		String str = result.getString( false );
-
-		if ( result.hasNonIgnorableExceptions() )
-			try
-			{
-				ExceptionReport.throwExceptions( result.getExceptions() );
-			}
-			catch ( Throwable e )
-			{
-				if ( e instanceof ScriptingException )
-					throw ( ScriptingException ) e;
-				if ( e instanceof MultipleException )
-					throw ( MultipleException ) e;
-				else
-					throw new IllegalStateException( "Well this was unexpected, we should only be throwing ScriptingExceptions here!", e );
-			}
-		else if ( result.hasNonIgnorableExceptions() )
-		{
-			LogBuilder.get().severe( String.format( "The script [%s] threw non-ignorable exceptions but the script was not required.", result.context().scriptName() ) );
-			if ( Versioning.isDevelopment() )
-				for ( IException e : result.getExceptions() )
-					if ( e instanceof Throwable )
-						LogBuilder.get().severe( ( Throwable ) e );
-		}
-
-		if ( result.hasIgnorableExceptions() )
-			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + str;
-
-		factory.print( str );
-		return result.getObject();
+		return StorageBus.getPath( StorageBus.PATH_CACHE );
 	}
 
-	public SQLModelBuilder model() throws ScriptingException, MultipleException
+	public String getFileName()
 	{
-		if ( request == null && factory == null )
-			throw new IllegalArgumentException( "We can't eval() this EvalContext until you provide either the request or the factory." );
-		if ( request != null && factory == null )
-			factory = request.getScriptingFactory();
+		return fileName;
+	}
+
+	public Subclass setFileName( String fileName )
+	{
+		this.fileName = fileName;
+		return ( Subclass ) this;
+	}
+
+	public Stream<DefinedScriptingOption.KeyValue> getKeyValueOptions()
+	{
+		return options.stream().filter( DefinedScriptingOption.KeyValue.class::isInstance ).map( DefinedScriptingOption.KeyValue.class::cast );
+	}
+
+	public Optional<DefinedScriptingOption> getOption( ScriptingOption scriptingOption )
+	{
+		return getOptions().filter( opt -> DefinedScriptingOption.Scripting.class.isAssignableFrom( opt.getClass() ) && ( ( DefinedScriptingOption.Scripting ) opt ).getOption() == scriptingOption ).findAny();
+	}
+
+	public Stream<DefinedScriptingOption> getOptions()
+	{
+		return options.stream();
+	}
+
+	public Path getPath()
+	{
+		return Paths.get( getFileName() );
+	}
+
+	public ScriptingResult getResult()
+	{
+		if ( result == null )
+			result = new ScriptingResult( this, content );
+		return result;
+	}
+
+	public String getScriptBaseClass()
+	{
+		return scriptBaseClass;
+	}
+
+	public Subclass setScriptBaseClass( String scriptBaseClass )
+	{
+		this.scriptBaseClass = scriptBaseClass;
+		return ( Subclass ) this;
+	}
+
+	public String getScriptClassName()
+	{
+		if ( getScriptPackage() == null )
+			return getScriptSimpleName();
+		if ( getScriptSimpleName() == null )
+			return null;
+		return getScriptPackage() + "." + getScriptSimpleName();
+	}
+
+	public String getScriptName()
+	{
+		return scriptName;
+	}
+
+	public Subclass setScriptName( String scriptName )
+	{
+		this.scriptName = scriptName;
+		return ( Subclass ) this;
+	}
+
+	public String getScriptPackage()
+	{
+		return scriptPackage;
+	}
+
+	public Subclass setScriptPackage( String scriptPackage )
+	{
+		this.scriptPackage = scriptPackage;
+		return ( Subclass ) this;
+	}
+
+	public String getScriptSimpleName()
+	{
+		return scriptName == null ? null : scriptName.contains( "." ) ? scriptName.substring( 0, scriptName.lastIndexOf( "." ) ) : scriptName;
+	}
+
+	/* public SQLModelBuilder model() throws ScriptingException, MultipleException
+	{
+		if ( request == null && scriptingFactory == null )
+			throw new IllegalArgumentException( "We can't eval() this EvalContext until you provide either the request or the scriptingFactory." );
+		if ( request != null && scriptingFactory == null )
+			getScriptingFactory = request.getScriptingFactory();
 
 		setScriptBaseClass( SQLModelBuilder.class.getName() );
 
-		result = factory.eval( this );
+		result = scriptingFactory.eval( this );
 
 		String str = result.getString( false );
 
@@ -353,87 +286,98 @@ public class ScriptingContext implements ExceptionContext
 		if ( result.hasIgnorableExceptions() )
 			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 
-		factory.print( str );
+		scriptingFactory.print( str );
 		return ( SQLModelBuilder ) result.getScript();
+	}*/
+
+	public abstract ScriptingFactory getScriptingFactory();
+
+	public Subclass setScriptingFactory( final ScriptingFactory factory )
+	{
+		this.scriptingFactory = factory;
+
+		if ( getContentType() == null && getFileName() != null )
+			setContentType( ContentTypes.getContentTypes( getFileName() ).findFirst().orElse( null ) );
+
+		return ( Subclass ) this;
 	}
 
-	public ScriptingFactory factory()
+	public String getShell()
 	{
-		return factory;
+		return shell;
 	}
 
-	com.chiorichan.factory.ScriptingContext factory( final ScriptingFactory factory )
+	public Subclass setShell( String shell )
 	{
-		this.factory = factory;
-
-		if ( contentType() == null && filename() != null )
-			contentType( ContentTypes.getContentType( filename() ) );
-
-		return this;
+		this.shell = shell;
+		return ( Subclass ) this;
 	}
 
-	public File file()
+	public Path getSourceDirectory()
 	{
-		return new File( filename() );
-	}
-
-	public String filename()
-	{
-		return filename;
+		return Paths.get( "/" );
 	}
 
 	public boolean isVirtual()
 	{
-		File scriptFile = new File( filename() );
-		return !UtilIO.isAbsolute( filename() ) || !scriptFile.exists();
+		return isVirtual;
 	}
 
-	public String md5()
+	public Subclass setVirtual( boolean virtual )
 	{
-		return UtilEncryption.md5( readBytes() );
+		isVirtual = virtual;
+		return ( Subclass ) this;
 	}
 
-	public String read() throws ScriptingException, MultipleException
+	public String md5Hash()
 	{
-		return read( false, true );
+		return UtilityEncrypt.md5Hex( readBytes() );
 	}
 
-	public String read( boolean printErrors ) throws ScriptingException, MultipleException
+	public String read() throws Exception
 	{
-		return read( false, printErrors );
+		return read( true, false );
 	}
 
-	public String read( boolean includeObj, boolean printErrors ) throws ScriptingException, MultipleException
+	public String read( boolean printErrors ) throws Exception
 	{
-		com.chiorichan.factory.ScriptingResult result = null;
-		if ( request != null )
-			result = request.getScriptingFactory().eval( this );
-		else if ( factory != null )
-			result = factory.eval( this );
-		else
-			throw new IllegalArgumentException( "We can't read() this EvalContext unless you provide either the HttpRequestWrapper or ScriptingFactory." );
+		return read( printErrors, false );
+	}
 
-		String str = result.getString( includeObj );
+	public String read( boolean printErrors, boolean dumpObject ) throws Exception
+	{
+		ScriptingFactory scriptingFactory = getScriptingFactory();
+		if ( scriptingFactory == null )
+			throw new ScriptingException.Runtime( "Can't read() script with a ScriptingFactory." );
 
-		// TODO required should not effect scripting exceptions
-		if ( result.hasNonIgnorableExceptions() )
+		ScriptingResult result = scriptingFactory.eval( this );
+
+		String strResult = result.getString();
+		if ( dumpObject && result.hasObject() )
+			strResult = strResult + UtilityObjects.castToString( result.getObject() );
+
+		if ( result.getExceptionReport().hasSevereExceptions() )
 			try
 			{
-				ExceptionReport.throwExceptions( result.getExceptions() );
+				result.getExceptionReport().throwSevereExceptions();
 			}
 			catch ( Throwable e )
 			{
-				if ( e instanceof ScriptingException )
-					throw ( ScriptingException ) e;
-				if ( e instanceof MultipleException )
+				if ( e instanceof ScriptingException.Error )
+					throw ( ScriptingException.Error ) e;
+				else if ( e instanceof ScriptingException.Runtime )
+					throw e;
+				else if ( e instanceof MultipleException )
 					throw ( MultipleException ) e;
 				else
-					throw new IllegalStateException( "Well this was unexpected, we should only be throwing ScriptingExceptions here!", e );
+					throw new ScriptingException.Error( "That was unexpected! We should only ever throw ScriptingExceptions here!", e );
 			}
-		if ( printErrors && result.hasIgnorableExceptions() )
-			str = ExceptionReport.printExceptions( result.getIgnorableExceptions() ) + "\n" + str;
 
-		return str;
+		// TODO Beatify the exception outputs!
+		if ( printErrors && result.getExceptionReport().hasIgnorableExceptions() )
+			strResult = result.getExceptionReport().printIgnorableToString() + "\n" + strResult;
+
+		return strResult;
 	}
 
 	public byte[] readBytes()
@@ -453,17 +397,6 @@ public class ScriptingContext implements ExceptionContext
 	public String readString( Charset charset )
 	{
 		return content.toString( charset );
-	}
-
-	public HttpRequestWrapper request()
-	{
-		return request;
-	}
-
-	public com.chiorichan.factory.ScriptingContext request( HttpRequestWrapper request )
-	{
-		this.request = request;
-		return this;
 	}
 
 	/**
@@ -501,75 +434,48 @@ public class ScriptingContext implements ExceptionContext
 		write( str.getBytes( charset ) );
 	}
 
-	public com.chiorichan.factory.ScriptingResult result()
+	public String setBaseSource()
 	{
-		if ( result == null )
-			result = new com.chiorichan.factory.ScriptingResult( this, content );
-		return result;
+		return source;
 	}
 
-	public String scriptClassName()
+	public Subclass setBaseSource( String source )
 	{
-		if ( scriptPackage() == null )
-			return scriptSimpleName();
-		if ( scriptSimpleName() == null )
-			return null;
-		return scriptPackage() + "." + scriptSimpleName();
+		// TODO Presently debug source files are only created when the entire server is in debug, however, we should make it so developers can turn this feature on per webroot or source file.
+		if ( EngineCore.isDevelopment() )
+			try
+			{
+				OutputStream out = Files.newOutputStream( Paths.get( scriptName + ".dbg" ).resolve( cacheDirectory ) );
+				out.write( UtilityStrings.decodeUtf8( source ) );
+				UtilityIO.closeQuietly( out );
+			}
+			catch ( Exception e )
+			{
+				// Do nothing since we only do this as a debug feature for developers.
+			}
+
+		this.source = source;
+		return ( Subclass ) this;
 	}
 
-	public String scriptName()
+	public void setHttpScriptingRequest( HttpScriptingRequest httpScriptingRequest )
 	{
-		return scriptName;
-	}
-
-	public com.chiorichan.factory.ScriptingContext scriptName( String scriptName )
-	{
-		this.scriptName = scriptName;
-		return this;
-	}
-
-	public String scriptPackage()
-	{
-		return scriptPackage;
-	}
-
-	public com.chiorichan.factory.ScriptingContext scriptPackage( String scriptPackage )
-	{
-		this.scriptPackage = scriptPackage;
-		return this;
-	}
-
-	public String scriptSimpleName()
-	{
-		return scriptName == null ? null : scriptName.contains( "." ) ? scriptName.substring( 0, scriptName.lastIndexOf( "." ) ) : scriptName;
-	}
-
-	public String shell()
-	{
-		return shell;
-	}
-
-	public com.chiorichan.factory.ScriptingContext shell( String shell )
-	{
-		this.shell = shell;
-		return this;
-	}
-
-	public Site site()
-	{
-		return site == null ? SiteModule.i().getDefaultSite() : site;
-	}
-
-	public com.chiorichan.factory.ScriptingContext site( Site site )
-	{
-		this.site = site;
-		return this;
+		this.httpScriptingRequest = httpScriptingRequest;
 	}
 
 	@Override
 	public String toString()
 	{
-		return String.format( "EvalExecutionContext {package=%s,name=%s,filename=%s,shell=%s,sourceSize=%s,contentType=%s}", scriptPackage, scriptName, filename, shell, content.readableBytes(), contentType );
+		return String.format( "EvalExecutionContext {package=%s,name=%s,fileName=%s,shell=%s,sourceSize=%s,contentType=%s}", scriptPackage, scriptName, fileName, shell, content.readableBytes(), contentType );
+	}
+
+	public void transformScriptingContext( ScriptingProcessor scriptingProcessor )
+	{
+		List<ScriptingOption> options = scriptingProcessor.getOptions().collect( Collectors.toList() );
+		Streams.forEachWithException( getKeyValueOptions(), option -> options.forEach( scriptingOption -> {
+			if ( scriptingOption.matches( option.getKey() ) )
+				addOption( scriptingOption, option.getValue().orElse( "" ) );
+		} ) );
 	}
 
 	public void write( byte... bytes )
@@ -582,13 +488,4 @@ public class ScriptingContext implements ExceptionContext
 		content.writeBytes( source );
 	}
 
-	public void setScriptBaseClass( String scriptBaseClass )
-	{
-		this.scriptBaseClass = scriptBaseClass;
-	}
-
-	public String getScriptBaseClass()
-	{
-		return scriptBaseClass;
-	}
 }

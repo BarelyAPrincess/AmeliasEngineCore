@@ -18,13 +18,13 @@ public class YieldBuffer
 
 	private Map<String, String> yields = new HashMap<>();
 
-	public void set( String key, String value )
-	{
-		yields.put( key, value );
-	}
-
 	public String get( String key )
 	{
 		return yields.get( key );
+	}
+
+	public void set( String key, String value )
+	{
+		yields.put( key, value );
 	}
 }

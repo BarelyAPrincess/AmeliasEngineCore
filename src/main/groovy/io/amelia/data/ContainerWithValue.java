@@ -296,6 +296,18 @@ public abstract class ContainerWithValue<BaseClass extends ContainerWithValue<Ba
 	}
 
 	@Override
+	public void setValue( ValueType value )
+	{
+		notDisposed();
+		notFlag( Flags.READ_ONLY );
+		if ( hasFlag( Flags.NO_OVERRIDE ) && hasValue() )
+			throw new ContainerException( getCurrentPath() + " has NO_OVERRIDE flag" );
+		if ( value != null && ContainerBase.class.isAssignableFrom( value.getClass() ) )
+			throw new ContainerException( "The value can't be of class ContainerBase, please use the appropriate methods instead." );
+		updateValue( value );
+	}
+
+	@Override
 	public final boolean hasValue( Namespace key )
 	{
 		return childFind( key ).map( ContainerWithValue::hasValue ).orElse( false );
@@ -328,18 +340,6 @@ public abstract class ContainerWithValue<BaseClass extends ContainerWithValue<Ba
 	public Voluntary<ValueType> pollValue( String key )
 	{
 		return childFind( key ).flatMap( ContainerWithValue::pollValue );
-	}
-
-	@Override
-	public void setValue( ValueType value )
-	{
-		notDisposed();
-		notFlag( Flags.READ_ONLY );
-		if ( hasFlag( Flags.NO_OVERRIDE ) && hasValue() )
-			throw new ContainerException( getCurrentPath() + " has NO_OVERRIDE flag" );
-		if ( value != null && ContainerBase.class.isAssignableFrom( value.getClass() ) )
-			throw new ContainerException( "The value can't be of class ContainerBase, please use the appropriate methods instead." );
-		updateValue( value );
 	}
 
 	@Override

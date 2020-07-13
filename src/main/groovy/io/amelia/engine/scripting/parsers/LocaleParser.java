@@ -30,7 +30,7 @@ public class LocaleParser extends HTMLCommentParser
 	public String resolveMethod( String... args ) throws Exception
 	{
 		if ( args.length > 2 )
-			LogBuilder.get().warning( "localeTrans() method only accepts one argument, ignored." );
+			L.warning( "localeTrans() method only accepts one argument, ignored." );
 
 		try
 		{

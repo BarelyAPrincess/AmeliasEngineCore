@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import io.amelia.engine.subsystem.ConfigData;
+import io.amelia.engine.config.ConfigData;
 import io.amelia.extra.UtilityMaps;
 import io.amelia.lang.ApplicationException;
 import io.amelia.lang.ReportingLevel;

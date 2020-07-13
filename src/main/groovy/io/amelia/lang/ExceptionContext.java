@@ -20,6 +20,9 @@ import io.amelia.extra.UtilityExceptions;
  */
 public interface ExceptionContext
 {
+	@Nonnull
+	ExceptionReport getExceptionReport();
+
 	/**
 	 * Returns the message associated with this {@link ExceptionContext}
 	 *
@@ -45,9 +48,6 @@ public interface ExceptionContext
 	 */
 	@Nonnull
 	Throwable getThrowable();
-
-	@Nonnull
-	ExceptionReport getExceptionReport();
 
 	/**
 	 * Called to properly add exception information to the ExceptionReport which is then used to generate a script trace or {@link ApplicationCrashReport}

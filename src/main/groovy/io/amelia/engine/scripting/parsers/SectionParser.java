@@ -19,8 +19,8 @@ import io.amelia.logging.LogBuilder;
 public class SectionParser extends HTMLCommentParser
 {
 	ScriptingFactory factory;
-	int stackLevel = -1;
 	String sectionKey;
+	int stackLevel = -1;
 
 	public SectionParser()
 	{

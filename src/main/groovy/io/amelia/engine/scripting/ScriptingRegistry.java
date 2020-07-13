@@ -10,9 +10,9 @@
 package io.amelia.engine.scripting;
 
 /**
- * 
+ *
  */
 public interface ScriptingRegistry
 {
-	com.chiorichan.factory.ScriptingEngine[] makeEngines( ScriptingContext context );
+	ScriptingEngine[] makeEngines( ScriptingContext context );
 }

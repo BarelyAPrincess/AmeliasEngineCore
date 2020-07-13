@@ -21,6 +21,25 @@ public final class ApplicationException
 		// Static
 	}
 
+	/*
+	 * INTERNAL USE ONLY
+	 * This should be muted within the main() method.
+	 */
+	public static class Crash extends Runtime
+	{
+		private static final long serialVersionUID = -4937198089020390887L;
+
+		public Crash( Throwable cause )
+		{
+			super( cause );
+		}
+
+		public Crash()
+		{
+			super();
+		}
+	}
+
 	public static class Error extends Exception implements ExceptionContext
 	{
 		protected final ReportingLevel level;
@@ -409,25 +428,6 @@ public final class ApplicationException
 		private void throwCauseException()
 		{
 			throw new IllegalArgumentException( "The cause argument can't be of it's own type." );
-		}
-	}
-
-	/*
-	 * INTERNAL USE ONLY
-	 * This should be muted within the main() method.
-	 */
-	public static class Crash extends Runtime
-	{
-		private static final long serialVersionUID = -4937198089020390887L;
-
-		public Crash( Throwable cause )
-		{
-			super( cause );
-		}
-
-		public Crash()
-		{
-			super();
 		}
 	}
 }

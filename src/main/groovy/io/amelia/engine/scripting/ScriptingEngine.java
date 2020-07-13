@@ -25,7 +25,9 @@ public interface ScriptingEngine
 	 * Returning false} will continue to next available ScriptingProcessor.
 	 *
 	 * @param context The EvalContext
+	 *
 	 * @return Context finished execution
+	 *
 	 * @throws Exception Provided simply for convenience, keep in mind that if any unique exceptions need special handling when thrown.
 	 */
 	boolean eval( ScriptingContext context ) throws Exception;
@@ -33,7 +35,7 @@ public interface ScriptingEngine
 	/**
 	 * Called on each instance to register what types this engine will handle
 	 *
-	 * @return types Array of content types and file extensions that provided {@link com.chiorichan.factory.ScriptingEngine} can handle, e.g., "text/css", "css", "js", or "application/javascript-x".
+	 * @return types Array of content types and file extensions that provided {@link ScriptingEngine} can handle, e.g., "text/css", "css", "js", or "application/javascript-x".
 	 * Leaving this field empty will catch everything, please don't abuse the power.
 	 */
 	List<String> getTypes();

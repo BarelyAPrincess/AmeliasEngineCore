@@ -12,9 +12,9 @@ package io.amelia.data.parcel;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
 
-import io.amelia.engine.subsystem.looper.queue.DefaultQueue;
-import io.amelia.engine.subsystem.looper.queue.EntryAbstract;
-import io.amelia.engine.subsystem.looper.queue.EntryRunnable;
+import io.amelia.engine.looper.queue.DefaultQueue;
+import io.amelia.engine.looper.queue.EntryAbstract;
+import io.amelia.engine.looper.queue.EntryRunnable;
 import io.amelia.lang.ApplicationException;
 import io.amelia.extra.UtilityObjects;
 
